@@ -1,0 +1,15 @@
+running develop
+running egg_info
+writing yjm_package01.egg-info/PKG-INFO
+writing dependency_links to yjm_package01.egg-info/dependency_links.txt
+writing entry points to yjm_package01.egg-info/entry_points.txt
+writing requirements to yjm_package01.egg-info/requires.txt
+writing top-level names to yjm_package01.egg-info/top_level.txt
+reading manifest file 'yjm_package01.egg-info/SOURCES.txt'
+writing manifest file 'yjm_package01.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm-package01.egg-link (link to .)
+Installing test script to /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/yjm_package01
+
+Installed /home/rokey/toilet_ws/toilet_project/build/yjm_package01
+running symlink_data

@@ -1,0 +1,9 @@
+source;share/yjm_package01/hook/pythonpath.ps1
+source;share/yjm_package01/hook/pythonpath.dsv
+source;share/yjm_package01/hook/pythonpath.sh
+source;share/yjm_package01/hook/ament_prefix_path.ps1
+source;share/yjm_package01/hook/ament_prefix_path.dsv
+source;share/yjm_package01/hook/ament_prefix_path.sh
+source;../../build/yjm_package01/share/yjm_package01/hook/pythonpath_develop.ps1
+source;../../build/yjm_package01/share/yjm_package01/hook/pythonpath_develop.dsv
+source;../../build/yjm_package01/share/yjm_package01/hook/pythonpath_develop.sh

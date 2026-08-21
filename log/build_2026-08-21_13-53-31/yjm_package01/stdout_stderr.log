@@ -1,0 +1,28 @@
+running develop
+Removing /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm-package01.egg-link (link to .)
+running egg_info
+writing ../../build/yjm_package01/yjm_package01.egg-info/PKG-INFO
+writing dependency_links to ../../build/yjm_package01/yjm_package01.egg-info/dependency_links.txt
+writing entry points to ../../build/yjm_package01/yjm_package01.egg-info/entry_points.txt
+writing requirements to ../../build/yjm_package01/yjm_package01.egg-info/requires.txt
+writing top-level names to ../../build/yjm_package01/yjm_package01.egg-info/top_level.txt
+reading manifest file '../../build/yjm_package01/yjm_package01.egg-info/SOURCES.txt'
+writing manifest file '../../build/yjm_package01/yjm_package01.egg-info/SOURCES.txt'
+running build
+running build_py
+copying yjm_package01/test.py -> /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build/lib/yjm_package01
+running install
+running install_lib
+creating /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01
+copying /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build/lib/yjm_package01/__init__.py -> /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01
+copying /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build/lib/yjm_package01/test.py -> /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01
+byte-compiling /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01/test.py to test.cpython-312.pyc
+running install_data
+copying resource/yjm_package01 -> /home/rokey/toilet_ws/toilet_project/install/yjm_package01/share/ament_index/resource_index/packages
+copying package.xml -> /home/rokey/toilet_ws/toilet_project/install/yjm_package01/share/yjm_package01
+running install_egg_info
+Copying ../../build/yjm_package01/yjm_package01.egg-info to /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01-0.0.0-py3.12.egg-info
+running install_scripts
+Installing test script to /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/yjm_package01
+writing list of installed files to '/home/rokey/toilet_ws/toilet_project/build/yjm_package01/install.log'

@@ -1,0 +1,2 @@
+[console_scripts]
+test = yjm_package01.test:main

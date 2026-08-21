@@ -1,0 +1,17 @@
+[1.918s] Invoking command in '/home/rokey/toilet_ws/toilet_project/build/yjm_package01': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/rokey/toilet_ws/toilet_project/build/yjm_package01/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build --no-deps symlink_data
+[2.378s] running develop
+[2.703s] running egg_info
+[2.758s] writing yjm_package01.egg-info/PKG-INFO
+[2.758s] writing dependency_links to yjm_package01.egg-info/dependency_links.txt
+[2.758s] writing entry points to yjm_package01.egg-info/entry_points.txt
+[2.766s] writing requirements to yjm_package01.egg-info/requires.txt
+[2.766s] writing top-level names to yjm_package01.egg-info/top_level.txt
+[2.823s] reading manifest file 'yjm_package01.egg-info/SOURCES.txt'
+[2.824s] writing manifest file 'yjm_package01.egg-info/SOURCES.txt'
+[2.854s] running build_ext
+[2.854s] Creating /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm-package01.egg-link (link to .)
+[2.855s] Installing test script to /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/yjm_package01
+[2.855s] 
+[2.855s] Installed /home/rokey/toilet_ws/toilet_project/build/yjm_package01
+[2.855s] running symlink_data
+[2.905s] Invoked command in '/home/rokey/toilet_ws/toilet_project/build/yjm_package01' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/rokey/toilet_ws/toilet_project/build/yjm_package01/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build --no-deps symlink_data

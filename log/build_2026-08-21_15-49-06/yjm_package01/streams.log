@@ -1,0 +1,24 @@
+[1.336s] Invoking command in '/home/rokey/toilet_ws/toilet_project/src/yjm_package01': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/rokey/toilet_ws/toilet_project/build/yjm_package01/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/yjm_package01 build --build-base /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build install --record /home/rokey/toilet_ws/toilet_project/build/yjm_package01/install.log --install-scripts $base/lib/yjm_package01 --single-version-externally-managed install_data
+[1.784s] running egg_info
+[1.822s] writing ../../build/yjm_package01/yjm_package01.egg-info/PKG-INFO
+[1.822s] writing dependency_links to ../../build/yjm_package01/yjm_package01.egg-info/dependency_links.txt
+[1.823s] writing entry points to ../../build/yjm_package01/yjm_package01.egg-info/entry_points.txt
+[1.823s] writing requirements to ../../build/yjm_package01/yjm_package01.egg-info/requires.txt
+[1.823s] writing top-level names to ../../build/yjm_package01/yjm_package01.egg-info/top_level.txt
+[1.896s] reading manifest file '../../build/yjm_package01/yjm_package01.egg-info/SOURCES.txt'
+[1.897s] writing manifest file '../../build/yjm_package01/yjm_package01.egg-info/SOURCES.txt'
+[1.897s] running build
+[1.898s] running build_py
+[1.898s] copying yjm_package01/test.py -> /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build/lib/yjm_package01
+[1.899s] running install
+[1.911s] running install_lib
+[1.949s] copying /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build/lib/yjm_package01/test.py -> /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01
+[1.950s] byte-compiling /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01/test.py to test.cpython-312.pyc
+[1.953s] running install_data
+[1.953s] running install_egg_info
+[1.990s] removing '/home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01-0.0.0-py3.12.egg-info' (and everything under it)
+[1.990s] Copying ../../build/yjm_package01/yjm_package01.egg-info to /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages/yjm_package01-0.0.0-py3.12.egg-info
+[1.992s] running install_scripts
+[2.219s] Installing test script to /home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/yjm_package01
+[2.219s] writing list of installed files to '/home/rokey/toilet_ws/toilet_project/build/yjm_package01/install.log'
+[2.263s] Invoked command in '/home/rokey/toilet_ws/toilet_project/src/yjm_package01' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/rokey/toilet_ws/toilet_project/build/yjm_package01/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/toilet_ws/toilet_project/install/yjm_package01/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/yjm_package01 build --build-base /home/rokey/toilet_ws/toilet_project/build/yjm_package01/build install --record /home/rokey/toilet_ws/toilet_project/build/yjm_package01/install.log --install-scripts $base/lib/yjm_package01 --single-version-externally-managed install_data
