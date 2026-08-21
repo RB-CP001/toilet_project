@@ -1,0 +1,13 @@
+"""Rinse: rinses the toilet bowl with water."""
+
+
+class Rinse:
+    pass
+
+
+def main(args=None):
+    pass
+
+
+if __name__ == '__main__':
+    main()
