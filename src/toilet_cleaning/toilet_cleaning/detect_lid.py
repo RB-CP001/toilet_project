@@ -99,7 +99,7 @@ def main(args=None):
             time=0.0,
             mod=DR_FC_MOD_ABS
         )
-        wait(5.0)
+        wait(5.5)
         fcon1 = check_force_condition(DR_AXIS_Z, max=20,ref=DR_BASE) 
         node.get_logger().info(f"fcon1:{fcon1}")
         #확인 후 변기뚜껑 위 위치로 이동
@@ -117,7 +117,7 @@ def main(args=None):
             release_compliance_ctrl()
             node.get_logger().info(f"fcon1:{fcon1}")
             node.get_logger().info("insert_with_force else실행")
-        
+            go_home()
             
         #변기 뚜껑이 있는지 없는지 반환
         return fcon1
@@ -138,8 +138,9 @@ def main(args=None):
             movej(movejpoint[1], vel=30, acc=30)
             movej(movejpoint[2], vel=30, acc=30)
             gripper_close()
-
+    gripper_open()
     try:
+        
         go_home()
         gripper_close()
         
@@ -147,9 +148,9 @@ def main(args=None):
         islid = insert_with_force()
         wait(1.0)
         node.get_logger().info(f"뚜껑 : {islid}")
-        if islid == -1:
-            openlid(islid)
-            node.get_logger().info("openlid 실행됨")
+       
+        openlid(islid)
+        node.get_logger().info("openlid")
 
     finally:
         node.destroy_node()
