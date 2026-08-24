@@ -39,9 +39,9 @@ class ApplyBleach:
         self.DR_FC_MOD_ABS = dsr.DR_FC_MOD_ABS
 
         # posx/posj가 준비된 시점에 좌표 생성
-        self.bleach_grip1 = posx(351.52, 211.93, 520.38, 3.36, 139.35, 85.00)
-        self.bleach_grip2 = posx(480.52, 211.93, 320.38, 3.36, 139.35, 85.00)
-        self.bleach_grip_up = posx(478.03, 204.82, 612.0, 3.42, 139.97, 85.00)
+        self.bleach_grip1 = posx(351.52, 217.0, 520.38, 3.36, 139.35, 85.00)
+        self.bleach_grip2 = posx(480.52, 217.0, 360.38, 3.36, 139.35, 85.00)
+        self.bleach_grip_up = posx(480.52, 217.0, 612.0, 3.36, 139.35, 85.00)
         # 변기 위에 세제 들고 있을 posj값
         self.bleach_home = posj(0.0, 0.0, 50.0, 0.0, 90.0, 93.3)
         # 변기 좌표 4개(세제 돌릴 위치)
@@ -76,7 +76,7 @@ class ApplyBleach:
     def release_bleach(self):
         self.node.get_logger().info("Release_bleach")
         self.movel(self.bleach_grip_up, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
+        self.wait(1.5)
         self.task_compliance_ctrl()
         self.set_stiffnessx(
             [3000, 3000, 3000, 200, 200, 200],
@@ -88,7 +88,7 @@ class ApplyBleach:
             time=0.0,
             mod=self.DR_FC_MOD_ABS
         )
-        self.wait(5.0)
+        self.wait(9.0)
         self.release_force(time=0.0)
         self.release_compliance_ctrl()
         self.wait(1.0)
