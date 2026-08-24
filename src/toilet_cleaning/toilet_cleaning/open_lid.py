@@ -1,13 +1,116 @@
 """Open Lid: opens the toilet lid."""
 
 
+import rclpy
+import DR_init
+from rclpy.node import Node
+
+ROBOT_ID = "dsr01"
+ROBOT_MODEL = "m0609"
+
+DR_init.__dsr__id = ROBOT_ID
+DR_init.__dsr__model = ROBOT_MODEL
+
 class OpenLid:
-    pass
+    def __init__(self,node):
+        from DR_common2 import posx, posj
+        self.node=node
+        self.lid_point=[posj(-10.13,-2.14,75.49,-2.76,106.43,-92.76),# 변기 손잡이 위,
+                        posj(-9.01,-2.77,90.70,-3.94,93.12,-92.78), #변기 손잡이 위치
+                                 ]  
+    def run(self):
+        from DSR_ROBOT2 import (
+                    set_tool,
+                    set_tcp,
+                    movej,
+                    movel,
+                    movesj,
+                    movec,
+                    set_digital_output,
+                    wait,
+                    get_current_posx,
+                    trans,
+                    task_compliance_ctrl,
+                    set_stiffnessx,
+                    set_desired_force,
+                    release_force,
+                    release_compliance_ctrl,
+                    amove_periodic,
+                    set_singularity_handling,
+                    check_force_condition,
+                    DR_BASE,
+                    DR_AVOID,
+                    DR_FC_MOD_ABS,
+                    DR_AXIS_Z,
+                )
+        from DR_common2 import posx, posj
+        
+        self.gripper_open()
+        self.go_home()         
+        self.move2lid()
+        self.gripper_close() 
+        self.node.get_logger().info("open_lid_start")
+        self.open_lid_define()
+        self.node.get_logger().info("open_lid_end")                   
+    def gripper_open(self):
+            from DSR_ROBOT2 import set_digital_output
+            set_digital_output(1, 0)
+            set_digital_output(2, 1)
+    def gripper_close(self):
+            from DSR_ROBOT2 import set_digital_output
+            set_digital_output(1, 1)
+            set_digital_output(2, 0)
+    def go_home(self):
+            from DSR_ROBOT2 import movej
+            from DR_common2 import posj
+            home = posj(0, 0, 50, 0, 90, 0)
+            movej(home, vel=30, acc=30)
+    def move2lid(self):
+            from DSR_ROBOT2 import movej, wait
+
+
+            #self.get_logger().info("변기 손잡이 잡자")
+            movej(self.lid_point[0], vel=30, acc=30)
+            wait(1.0)
+            movej(self.lid_point[1], vel=30, acc=30)
+            wait(1.0)
+    def open_lid_define(self):
+            from DSR_ROBOT2 import movec, task_compliance_ctrl, release_compliance_ctrl,wait,DR_BASE
+            from DR_common2 import posx
+            open_lid_pos = [posx(374.21,-69.84,634.67,117.69,-165.73,-95.88),# 중간정도 열린 위치
+                            posx(533.61,-33.31,646.64,172.55,-140.40,-101.61) # 완전히 열린 위치
+                            ]
+            task_compliance_ctrl(stx=[3000, 3000, 3000, 200, 200, 200], time=0.0)
+            print('컴플라이언스 ON')
+            movec(open_lid_pos[0], open_lid_pos[1], vel=30, acc=30, ref=DR_BASE)
+            print(f'open_lid_pos[0]: {open_lid_pos[0]}')
+            print(f'open_lid_pos[1]: {open_lid_pos[1]}')
+            print('movec 완료')
+            wait(3.0)
+            release_compliance_ctrl()
+    
+            
+        
+        
+    
 
 
 def main(args=None):
-    pass
+    rclpy.init(args=args)
+    node = rclpy.create_node("open_lid", namespace=ROBOT_ID)
+    DR_init.__dsr__node = node
+    node.get_logger().info("open_lid_start")
+    try:
+        open_lid = OpenLid(node)
+        node.get_logger().info('')
+        open_lid.run()
+        
 
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+    
 
 if __name__ == '__main__':
+    print("main_start")
     main()
