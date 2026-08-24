@@ -17,7 +17,8 @@ class OpenLid:
         self.node=node
         self.lid_point=[posj(-10.13,-2.14,75.49,-2.76,106.43,-92.76),# 변기 손잡이 위,
                         posj(-9.01,-2.77,90.70,-3.94,93.12,-92.78), #변기 손잡이 위치
-                                 ]  
+                        posj(-6.70,2.64,70.35,-0.63,26.74,-94.18)   #변기 탈출 
+                    ]  
     def run(self):
         from DSR_ROBOT2 import (
                     set_tool,
@@ -45,13 +46,18 @@ class OpenLid:
                 )
         from DR_common2 import posx, posj
         
+        
         self.gripper_open()
         self.go_home()         
         self.move2lid()
         self.gripper_close() 
         self.node.get_logger().info("open_lid_start")
         self.open_lid_define()
-        self.node.get_logger().info("open_lid_end")                   
+        self.node.get_logger().info("open_lid_end")
+        
+        wait(1.0)
+        self.go_home()
+                     
     def gripper_open(self):
             from DSR_ROBOT2 import set_digital_output
             set_digital_output(1, 0)
@@ -66,28 +72,55 @@ class OpenLid:
             home = posj(0, 0, 50, 0, 90, 0)
             movej(home, vel=30, acc=30)
     def move2lid(self):
-            from DSR_ROBOT2 import movej, wait
+        from DSR_ROBOT2 import movej, wait
 
 
-            #self.get_logger().info("변기 손잡이 잡자")
-            movej(self.lid_point[0], vel=30, acc=30)
-            wait(1.0)
-            movej(self.lid_point[1], vel=30, acc=30)
-            wait(1.0)
+        self.node.get_logger().info("변기 손잡이 잡자")
+        movej(self.lid_point[0], vel=30, acc=30)
+        wait(1.0)
+        movej(self.lid_point[1], vel=30, acc=30)
+        wait(1.0)
     def open_lid_define(self):
-            from DSR_ROBOT2 import movec, task_compliance_ctrl, release_compliance_ctrl,wait,DR_BASE
-            from DR_common2 import posx
-            open_lid_pos = [posx(374.21,-69.84,634.67,117.69,-165.73,-95.88),# 중간정도 열린 위치
-                            posx(533.61,-33.31,646.64,172.55,-140.40,-101.61) # 완전히 열린 위치
-                            ]
-            task_compliance_ctrl(stx=[3000, 3000, 3000, 200, 200, 200], time=0.0)
-            print('컴플라이언스 ON')
-            movec(open_lid_pos[0], open_lid_pos[1], vel=30, acc=30, ref=DR_BASE)
-            print(f'open_lid_pos[0]: {open_lid_pos[0]}')
-            print(f'open_lid_pos[1]: {open_lid_pos[1]}')
-            print('movec 완료')
-            wait(3.0)
-            release_compliance_ctrl()
+        from DSR_ROBOT2 import movec, movej,task_compliance_ctrl, release_compliance_ctrl,wait,DR_BASE
+        from DR_common2 import posx
+        open_lid_pos = [posx(314.36,-47.50,501.14,139.07,-170.30,54.78),#중간의 중간위치
+                        posx(323.31,-46.56,591.79,160.97,-157.50,77.04),# 중간정도 열린 위치
+                        posx(364.37,-46,637.05,169.26,-142.28,84.49),# 거의 열린 위치
+                        posx(472.72,-50.34,595.19,172.79,-119.58,85.17) # 완전히 열린 위치
+                        ]
+        task_compliance_ctrl(stx=[3000, 3000, 3000, 200, 200, 200], time=0.0)
+        self.node.get_logger().info('컴플라이언스 ON')
+        wait(1.0)
+        self.node.get_logger().info('move_1 시작')
+        movec(open_lid_pos[0], open_lid_pos[1], vel=30, acc=30, ref=DR_BASE)
+        wait(2.0)
+        self.node.get_logger().info(f'open_lid_pos[0]: {open_lid_pos[0]}')
+        self.node.get_logger().info(f'open_lid_pos[1]: {open_lid_pos[1]}')
+        self.node.get_logger().info('movec_1 완료')
+        
+        movec(open_lid_pos[1], open_lid_pos[2], vel=30, acc=30, ref=DR_BASE)
+        wait(1.0)
+        self.node.get_logger().info(f'open_lid_pos[1]: {open_lid_pos[1]}')
+        self.node.get_logger().info(f'open_lid_pos[2]: {open_lid_pos[2]}')
+        self.node.get_logger().info('movec_2 완료')
+        
+        movec(open_lid_pos[2], open_lid_pos[3], vel=30, acc=30, ref=DR_BASE)
+        wait(2.0)
+        self.node.get_logger().info(f'open_lid_pos[2]: {open_lid_pos[2]}')
+        self.node.get_logger().info(f'open_lid_pos[3]: {open_lid_pos[3]}')
+        self.node.get_logger().info('movec_3 완료')
+        wait(1.0)
+        self.gripper_open()
+        movej(self.lid_point[2], vel=30, acc=30)
+        wait(1.0)
+        
+        self.node.get_logger().info(f'open_lid_pos[3]: {open_lid_pos[3]}')
+        self.node.get_logger().info('movej_4 완료')
+        self.node.get_logger().info('컴플라이언스 OFF')
+        release_compliance_ctrl()
+        
+
+        
     
             
         
@@ -102,7 +135,7 @@ def main(args=None):
     node.get_logger().info("open_lid_start")
     try:
         open_lid = OpenLid(node)
-        node.get_logger().info('')
+        node.get_logger().info('클래스 저장')
         open_lid.run()
         
 
