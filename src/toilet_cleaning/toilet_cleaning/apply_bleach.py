@@ -15,7 +15,13 @@ class ApplyBleach:
         self.node = node
         self.vel = vel
         self.acc = acc
-
+        # 락스통 위치로 이동할 좌표
+        self.bleach_grip = [
+            posj(),
+            posj(),
+            posj()
+        ]
+        self.bleach_grip_up = posx()
         # 변기 위에 세제 들고 있을 posj값
         self.bleach_home = posj(0.0, 0.0, 51.5, 0.0, 90.0, 93.3)
         # 변기 좌표 4개(세제 돌릴 위치)
@@ -23,7 +29,14 @@ class ApplyBleach:
         self.bleach_via1 = posx(384.86, 30.47, 505.72, 37.27, -166.55, 126.64)
         self.bleach_half = posx(338.66, -0.33, 505.72, 38.02, -161.64, 131.44)
         self.bleach_via2 = posx(415.89, -38.78, 505.72, 38.53, -161.64, 137.57)
+    
+    def run(self):
+        self.node.get_logger().info("Applying bleach...")
 
+    # 락스를 잡으러 감.
+    def grip_bleach(self):
+        movesj(self.bleach_grip, vel=self.vel, acc=self.acc)
+        movel(self.bleach_grip_up, vel=self.vel, acc=self.acc)
     # 그리퍼 열기
     def gripper_open(self):
         set_digital_output(1, 0)
@@ -57,7 +70,7 @@ def main(args=None):
     node = rclpy.create_node("apply_bleach", namespace=ROBOT_ID)
     DR_init.__dsr__node = node
     
-    global set_tool, set_tcp, movej, movel, movesj, movec
+    global set_tool, set_tcp, movej, movel, movesj, movec, movesj
     global set_digital_output, wait, get_current_posx, trans
     global task_compliance_ctrl, set_stiffnessx, set_desired_force
     global release_force, release_compliance_ctrl, amove_periodic
@@ -72,6 +85,7 @@ def main(args=None):
         movel,
         movesj,
         movec,
+        movesj,
         set_digital_output,
         wait,
         get_current_posx,
