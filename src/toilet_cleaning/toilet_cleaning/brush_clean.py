@@ -251,27 +251,48 @@ class BrushClean:
         """
         브러시 잡는 위치 바로 위. 
 
-        X/Y/orientation은 그대로 두고
-        BASE Z만 +100 mm.
         """
 
         from DSR_ROBOT2 import posj
 
-        self.node.get_logger().info("Get brush approach pose")
+        self.node.get_logger().info("Get brush approach posej")
 
         brush_approach_posj = posj(
-            25.06,
-            29.35,
-            30.58,
-            -2.98,
-            118.38,
-            -62.38
+            26.0,
+            25.0,
+            45.0,
+            -2.5,
+            107.0,
+            -54.0
         )
 
         self.node.get_logger().info(f"approach point: {brush_approach_posj}")
         
         return brush_approach_posj
 
+
+    def get_brush_pick_posej(self):
+        """
+        브러시 잡는 위치
+
+        """
+
+        from DSR_ROBOT2 import posj
+
+        self.node.get_logger().info("Get brush approach posej")
+
+        brush_pick_posj = posj(
+            27.0,
+            29.0,
+            54.0,
+            -5.0,
+            100.0,
+            -54.0
+        )
+
+        self.node.get_logger().info(f"pick point: {brush_pick_posj}")
+        
+        return brush_pick_posj
     # =========================================================
     # PICK BRUSH
     # =========================================================
@@ -289,8 +310,7 @@ class BrushClean:
         self.node.get_logger().info("========== PICK BRUSH ==========")
 
         approach_j = self.get_brush_approach_posej() 
-        approach = self.get_brush_approach_pose()
-        pick = self.get_brush_pick_pose()
+        pick_j = self.get_brush_pick_posej()
 
         # -----------------------------------------------------
         # 1. 브러시 위로 이동
@@ -306,33 +326,6 @@ class BrushClean:
         )
 
 
-        ##################################
-
-        position, sol = get_current_posx(ref=DR_BASE)
-
-        self.node.get_logger().info(f"Current position: {position}, sol={sol}")
-
-        move_point = posx(
-            position[0],
-            position[1],
-            position[2] - 70.0,
-            position[3],
-            position[4],
-            position[5],
-        )
-
-        movel(move_point, vel=self.vel, acc=self.acc)
-
-        ###############################
-
-
-        # movel(
-        #     approach,
-        #     vel=self.vel,
-        #     acc=self.acc,
-        #     ref=DR_BASE,
-        # )
-
         # -----------------------------------------------------
         # 2. Gripper open
         # -----------------------------------------------------
@@ -343,14 +336,17 @@ class BrushClean:
         # 3. 위 -> 아래
         # -----------------------------------------------------
 
+
+        wait(0.5)
+
         self.node.get_logger().info("Move down to brush")
 
-        movel(
-            pick,
-            vel=30,
-            acc=30,
-            ref=DR_BASE,
+        movej(
+            pick_j,
+            vel=self.vel,
+            acc=self.acc,
         )
+
 
         wait(0.5)
 
@@ -368,12 +364,12 @@ class BrushClean:
 
         self.node.get_logger().info("Lift brush")
 
-        movel(
-            approach,
+        movej(
+            approach_j,
             vel=self.vel,
             acc=self.acc,
-            ref=DR_BASE,
         )
+
 
         self.node.get_logger().info("Brush picked")
 
@@ -403,32 +399,12 @@ class BrushClean:
 
         self.node.get_logger().info("========== PLACE BRUSH ==========")
 
-        approach = self.get_brush_approach_pose()
 
         approach_j = self.get_brush_approach_posej()
 
 
-        ##################################
+        pick_j = self.get_brush_pick_posej()
 
-        position, sol = get_current_posx(ref=DR_BASE)
-
-        self.node.get_logger().info(f"Current position: {position}, sol={sol}")
-
-        move_point = [
-            position[0],
-            position[1],
-            position[2] - 70.0,
-            position[3],
-            position[4],
-            position[5],
-        ]
-
-
-        ###############################
-
-        pickup = self.get_brush_pick_pose()
-
-        place = self.get_brush_pick_pose()
 
         # -----------------------------------------------------
         # 1. 보관 위치 위
@@ -449,13 +425,12 @@ class BrushClean:
         # -----------------------------------------------------
         # 2. 위 -> 아래
         # -----------------------------------------------------
+        wait(0.5)
 
-        movel(
-            pickup,
+        movej(
+            pick_j,
             vel=self.vel,
-            acc=self.acc,
-            ref=DR_BASE,
-        )
+            acc=self.acc,)
 
         wait(0.5)
 
@@ -471,12 +446,10 @@ class BrushClean:
         # 4. 그리퍼만 수직 상승
         # -----------------------------------------------------
 
-        movel(
-            approach,
+        movej(
+            approach_j,
             vel=self.vel,
-            acc=self.acc,
-            ref=DR_BASE,
-        )
+            acc=self.acc,)
 
         self.node.get_logger().info("Brush returned")
 
@@ -952,7 +925,7 @@ class BrushClean:
             # 2. Clean toilet
             # -------------------------------------------------
 
-            self.clean_bowl()
+            #self.clean_bowl()
 
             # -------------------------------------------------
             # 3. Return brush
