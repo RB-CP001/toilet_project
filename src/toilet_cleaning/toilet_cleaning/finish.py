@@ -99,13 +99,13 @@ class Finish:
         )
 
         self.set_desired_force(
-            [0, 0, -30, 0, 0, 0],
+            [0, 0, -40, 0, 0, 0],
             [0, 0, 1, 0, 0, 0],
             time=0.0,
             mod=self.DR_FC_MOD_ABS
         )
 
-        self.wait(2.0)
+        self.wait(3.0)
 
         # 힘 제어 끄기 (래버에서 떼기)
         self.release_force(time=0.0)
