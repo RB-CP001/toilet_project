@@ -11,7 +11,7 @@ DR_init.__dsr__model = ROBOT_MODEL
 
 
 class ApplyBleach:
-    def __init__(self, node, vel=60, acc=60):
+    def __init__(self, node, vel=30, acc=30):
         self.node = node
         self.vel = vel
         self.acc = acc
@@ -22,6 +22,7 @@ class ApplyBleach:
         self.movej = dsr.movej
         self.movel = dsr.movel
         self.movec = dsr.movec
+        self.movesj = dsr.movesj
         self.set_digital_output = dsr.set_digital_output
         self.wait = dsr.wait
         self.get_current_posx = dsr.get_current_posx
@@ -39,43 +40,48 @@ class ApplyBleach:
         self.DR_FC_MOD_ABS = dsr.DR_FC_MOD_ABS
 
         # posx/posj가 준비된 시점에 좌표 생성
-        self.bleach_grip1 = posx(351.52, 217.0, 520.38, 3.36, 139.35, 85.00)
-        self.bleach_grip2 = posx(480.52, 217.0, 360.38, 3.36, 139.35, 85.00)
-        self.bleach_grip_up = posx(480.52, 217.0, 612.0, 3.36, 139.35, 85.00)
+        self.bleach_grip1 = posj(32.0, -2.0, 88.0, -22.0, 55.0, -90.0)
+        self.bleach_grip2 = posj(26.85, 11.27, 93.88, -28.31, 37.86, -45.17)
+        self.bleach_grip_up = posj(28.32,-0.66, 91.07, -34.43, 38.63, -45.19)
         # 변기 위에 세제 들고 있을 posj값
-        self.bleach_home = posj(0.0, 0.0, 50.0, 0.0, 90.0, 93.3)
+        self.bleach_home = posj(0.0, -10.5, 50.0, 0.0, 90.0, -90.0)
         # 변기 좌표 4개(세제 돌릴 위치)
-        self.bleach_start = posx(427.60, -7.93, 505.72, 40.41, -171.26, 135.89)
-        self.bleach_via1 = posx(384.86, 30.47, 505.72, 37.27, -166.55, 126.64)
-        self.bleach_half = posx(338.66, -0.33, 505.72, 38.02, -161.64, 131.44)
-        self.bleach_via2 = posx(415.89, -38.78, 505.72, 38.53, -161.64, 137.57)
-    
+        self.bleach_start = posj(-1.35, 8.13, 64.05, -6.94, 124.30, -83.79)
+        self.bleach_via1 = posj(5.47, 19.90, 51.20, -8.61, 124.55, -83.72)
+        self.bleach_half = posj(3.18, 29.13, 38.96, -15.90, 126.98, -83.71)
+        self.bleach_via2 = posj(-0.25, 18.08, 54.38, -15.86, 123.52, -83.71)
+        # 우리 모두의 홈좌표
+        self.our_base = posj(0, 0, 50, 0, 90, 0)
     # 전체 함수 동작 함수
     def run(self):
         self.node.get_logger().info("Applying bleach...")
+        self.gripper_open()
         self.go_gripper_home()
-        self.wait(1.0)
         self.grip_bleach()
-        self.wait(1.0)
-        self.apply()
-        self.wait(1.0)
         self.go_gripper_home()
-        self.wait(1.0)
+        self.apply()
+        self.go_gripper_home()
         self.release_bleach()
+        self.wait(1.0)
+        self.go_to_base()
+        
 
     # 락스를 잡으러 감
     def grip_bleach(self):
         self.node.get_logger().info("Grip_bleach")
-        self.movel(self.bleach_grip1, vel=self.vel, acc=self.acc)
-        self.wait(2.0)
-        self.movel(self.bleach_grip2, vel=self.vel, acc=self.acc)
+        self.gripper_open()
+        self.movej(self.bleach_grip1, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
+        self.movej(self.bleach_grip2, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
         self.gripper_close()
-        self.movel(self.bleach_grip_up, vel=self.vel, acc=self.acc)
+        self.movej(self.bleach_grip_up, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
 
     # 락스를 돌려두기 위해 감
     def release_bleach(self):
         self.node.get_logger().info("Release_bleach")
-        self.movel(self.bleach_grip_up, vel=self.vel, acc=self.acc)
+        self.movej(self.bleach_grip_up, vel=self.vel, acc=self.acc)
         self.wait(1.5)
         self.task_compliance_ctrl()
         self.set_stiffnessx(
@@ -99,32 +105,52 @@ class ApplyBleach:
         self.node.get_logger().info("gripper_open")
         self.set_digital_output(1, 0)
         self.set_digital_output(2, 1)
+        self.wait(1.0)
 
     # 그리퍼 닫기
     def gripper_close(self):
         self.node.get_logger().info("gripper_close")
         self.set_digital_output(1, 1)
         self.set_digital_output(2, 0)
+        self.wait(1.0)
 
     # 세제 홈 위치 (실제 홈 위치와 그리퍼 각도 다름)
     def go_gripper_home(self):
         self.node.get_logger().info("go_bleach_home")
         self.movej(self.bleach_home, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
 
     # 도포하는 시작 위치로 이동
     def move_to_start(self):
         self.node.get_logger().info("move_to_start")
-        self.movel(self.bleach_start, vel=self.vel, acc=self.acc)
+        self.movej(self.bleach_start, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
 
     # 세제를 실제로 도포
     def apply(self):
         self.node.get_logger().info("apply")
         self.move_to_start()
         self.wait(1.0)
-        self.movec(self.bleach_via1, self.bleach_half, vel=self.vel, acc=self.acc)
-        self.movec(self.bleach_via2, self.bleach_start, vel=self.vel, acc=self.acc)
+        current = self.get_current_posx()
+
+        bleach_waypoint = [
+            self.bleach_start,
+            self.bleach_via1,
+            self.bleach_half,
+            self.bleach_via2,
+            self.bleach_start
+        ]
+
+        self.movesj(bleach_waypoint, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
+        
         return True
 
+    def go_to_base(self):
+        self.node.get_logger().info("go_to_base")
+        self.movej(self.bleach_grip_up, vel=self.vel, acc=self.acc)
+        self.wait(1.0)
+        self.movej(self.our_base, vel=self.vel, acc=self.acc)
 
 def main(args=None):
     rclpy.init(args=args)
