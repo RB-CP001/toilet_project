@@ -86,7 +86,8 @@ class OpenLid:
         wait(1.0)
     def open_lid_define(self):
         from DSR_ROBOT2 import movec, movej,task_compliance_ctrl, release_compliance_ctrl,wait,DR_BASE
-        from DR_common2 import posx
+        from DR_common2 import posx,posj
+        self.node.get_logger().info("open_lid_define 시작")
         open_lid_pos = [posx(314.36,-47.50,501.14,139.07,-170.30,54.78),#중간의 중간위치
                         posx(323.31,-46.56,591.79,160.97,-157.50,77.04),# 중간정도 열린 위치
                         posx(364.37,-46,637.05,169.26,-142.28,84.49),# 거의 열린 위치
