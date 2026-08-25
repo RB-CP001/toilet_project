@@ -57,7 +57,7 @@ class BrushClean:
 
         # 중요:
         # 청소 중 Z는 이 값으로 고정
-        self.clean_z = 474.32
+        self.clean_z = 494.32
 
         # 중요:
         # 브러시는 360도이므로
@@ -80,13 +80,13 @@ class BrushClean:
         self.x_min = 390.79
 
         # X+ 방향 벽
-        self.x_max = 522.09
+        self.x_max = 540.09
 
         # Y- 방향 벽
         self.y_min = -130.70
 
         # Y+ 방향 벽
-        self.y_max = -45.55
+        self.y_max = -43.55
 
         # =====================================================
         # 4. DISTANCE FROM CENTER TO EACH WALL
@@ -101,13 +101,13 @@ class BrushClean:
         # 452.88 - 390.79 = 62.09 mm
 
         self.radius_x_plus = (self.x_max - self.center_x)
-        # 522.09 - 452.88 = 69.21 mm
+        # 540.09 - 452.88 = 87.21 mm
 
         self.radius_y_minus = (self.center_y - self.y_min)
         # -76.37 - (-130.70) = 54.33 mm
 
         self.radius_y_plus = (self.y_max - self.center_y)
-        # -45.55 - (-76.37) = 30.82 mm
+        # -43.55 - (-76.37) = 32.82 mm
 
         # =====================================================
         # 5. CLEANING PARAMETERS
@@ -120,12 +120,17 @@ class BrushClean:
         self.angle_step = 15
 
         # Periodic scrub
-        #
-        # ±6 mm
-        # 전체 stroke = 12 mm
-        self.scrub_amp = 6.0
 
-        self.scrub_period = 1.2
+        # XY 왕복
+        self.scrub_amp = 6.0 # ±6 mm
+
+        # 회전 왕복
+        self.rotate_amp = 5.0 # +,-5 deg
+
+        # 주기
+        self.scrub_period = 0.5
+        self.rotate_period = 0.5
+
         self.scrub_repeat = 3
 
         # =====================================================
@@ -176,7 +181,7 @@ class BrushClean:
         set_digital_output(1, 0)
         set_digital_output(2, 1)
 
-        wait(1.0)
+        wait(0.3)
 
     def gripper_close(self):
         """
@@ -190,7 +195,7 @@ class BrushClean:
         set_digital_output(1, 1)
         set_digital_output(2, 0)
 
-        wait(1.0)
+        wait(0.3)
 
     # =========================================================
     # BRUSH PICK POSES
@@ -228,16 +233,6 @@ class BrushClean:
 
         self.node.get_logger().info("Get brush approach pose")
 
-
-        brush_approach_posj = posj(
-            25.06,
-            29.35,
-            30.58,
-            -2.98,
-            118.38,
-            -62.38
-        )
-
         approach_point = posx(
             self.brush_pick_x,
             self.brush_pick_y,
@@ -247,9 +242,7 @@ class BrushClean:
             self.brush_pick_ry,
             self.brush_pick_rz,
         )
-        self.node.get_logger().info(
-                    f"approach point: {approach_point}"
-                )
+        self.node.get_logger().info(f"approach point: {approach_point}")
         
         return approach_point
 
@@ -266,7 +259,6 @@ class BrushClean:
 
         self.node.get_logger().info("Get brush approach pose")
 
-
         brush_approach_posj = posj(
             25.06,
             29.35,
@@ -276,10 +268,7 @@ class BrushClean:
             -62.38
         )
 
-
-        self.node.get_logger().info(
-                    f"approach point: {brush_approach_posj}"
-                )
+        self.node.get_logger().info(f"approach point: {brush_approach_posj}")
         
         return brush_approach_posj
 
@@ -290,16 +279,7 @@ class BrushClean:
     def pick_brush(self):
         """
         위에서 아래로 내려가 브러시를 잡는다.
-
-            Approach
-                ↓
-            Gripper OPEN
-                ↓
-              Pick
-                ↓
-            Gripper CLOSE
-                ↓
-              Lift
+        Approach -> Gripper OPEN -> Pick -> Gripper CLOSE -> Lift
         """
 
         from DSR_ROBOT2 import (movel, movej, wait, DR_BASE, posx, get_current_posx)
@@ -372,7 +352,7 @@ class BrushClean:
             ref=DR_BASE,
         )
 
-        wait(1.0)
+        wait(0.5)
 
         # -----------------------------------------------------
         # 4. Brush 잡기
@@ -380,7 +360,7 @@ class BrushClean:
 
         self.gripper_close()
 
-        wait(1.0)
+        wait(0.5)
 
         # -----------------------------------------------------
         # 5. 수직으로 올리기
@@ -396,6 +376,10 @@ class BrushClean:
         )
 
         self.node.get_logger().info("Brush picked")
+
+
+        self.move_to_home()
+
 
     # =========================================================
     # PLACE BRUSH
@@ -473,7 +457,7 @@ class BrushClean:
             ref=DR_BASE,
         )
 
-        wait(1.0)
+        wait(0.5)
 
         # -----------------------------------------------------
         # 3. 놓기
@@ -481,7 +465,7 @@ class BrushClean:
 
         self.gripper_open()
 
-        wait(1.0)
+        wait(0.5)
 
         # -----------------------------------------------------
         # 4. 그리퍼만 수직 상승
@@ -588,15 +572,9 @@ class BrushClean:
         else:
             radius_y = self.radius_y_minus
 
-        x = (
-            self.center_x
-            + radius_x * cos_t
-        )
+        x = (self.center_x + radius_x * cos_t)
 
-        y = (
-            self.center_y
-            + radius_y * sin_t
-        )
+        y = (self.center_y + radius_y * sin_t)
 
         return x, y
 
@@ -776,8 +754,8 @@ class BrushClean:
 
         movel(
             above,
-            vel=15,
-            acc=15,
+            vel=30,
+            acc=30,
             ref=DR_BASE,
         )
 
@@ -791,12 +769,12 @@ class BrushClean:
 
         movel(
             center,
-            vel=8,
-            acc=8,
+            vel=30,
+            acc=30,
             ref=DR_BASE,
         )
 
-        wait(0.3)
+        wait(0.5)
 
         # -----------------------------------------------------
         # 3. Cleaning angles
@@ -835,8 +813,8 @@ class BrushClean:
 
         movel(
             first_target,
-            vel=6,
-            acc=6,
+            vel=30,
+            acc=30,
             ref=DR_BASE,
         )
 
@@ -886,8 +864,8 @@ class BrushClean:
             if i > 0:
                 movel(
                     target,
-                    vel=5,
-                    acc=5,
+                    vel=10,
+                    acc=10,
                     ref=DR_BASE,
                 )
 
@@ -899,7 +877,7 @@ class BrushClean:
                 angle
             )
 
-            wait(0.15)
+            wait(0.2)
 
         # -----------------------------------------------------
         # 7. Compliance OFF
@@ -917,8 +895,8 @@ class BrushClean:
 
         movel(
             center,
-            vel=6,
-            acc=6,
+            vel=30,
+            acc=30,
             ref=DR_BASE,
         )
 
@@ -932,8 +910,8 @@ class BrushClean:
 
         movel(
             above,
-            vel=8,
-            acc=8,
+            vel=30,
+            acc=30,
             ref=DR_BASE,
         )
 
@@ -974,7 +952,7 @@ class BrushClean:
             # 2. Clean toilet
             # -------------------------------------------------
 
-            #self.clean_bowl()
+            self.clean_bowl()
 
             # -------------------------------------------------
             # 3. Return brush
