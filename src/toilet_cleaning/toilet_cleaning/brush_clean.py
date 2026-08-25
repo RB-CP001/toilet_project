@@ -960,6 +960,8 @@ class BrushClean:
 
             self.place_brush()
 
+            self.move_to_home()
+
             self.node.get_logger().info("========== BRUSH CLEAN COMPLETE ==========")
 
             return True
