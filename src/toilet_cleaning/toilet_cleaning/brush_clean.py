@@ -57,7 +57,7 @@ class BrushClean:
 
         # 중요:
         # 청소 중 Z는 이 값으로 고정
-        self.clean_z = 494.32
+        self.clean_z = 484.0
 
         # 중요:
         # 브러시는 360도이므로
