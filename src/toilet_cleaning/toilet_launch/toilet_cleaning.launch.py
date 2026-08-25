@@ -12,7 +12,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 3. LaunchDescription에 생성한 노드들을 담아서 실행 대상으로 반환
+    # 노드들 반환
     return LaunchDescription([
         cleaning_manager_node
     ])
