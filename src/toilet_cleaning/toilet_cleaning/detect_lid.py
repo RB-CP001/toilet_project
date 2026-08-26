@@ -94,7 +94,7 @@ class DetectLid:
             self.go_home()
                 
             #변기 뚜껑이 있는지 없는지 반환
-        return fcon1
+        return True
 
 
             
