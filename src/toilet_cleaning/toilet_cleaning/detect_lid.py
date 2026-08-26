@@ -98,15 +98,22 @@ class DetectLid:
             wait,
         )
 
-        self.node.get_logger().info(
-            "Gripper OPEN"
-        )
 
+        self.node.get_logger().info("Gripper OPEN - START")
+
+        self.node.get_logger().info("Before DO 1")
         set_digital_output(1, 0)
+        self.node.get_logger().info("After DO 1")
+
+        self.node.get_logger().info("Before DO 2")
         set_digital_output(2, 1)
+        self.node.get_logger().info("After DO 2")
 
-        wait(0.3)
+        self.node.get_logger().info("Before wait")
+        wait(1.0)
+        self.node.get_logger().info("After wait")
 
+        self.node.get_logger().info("Gripper OPEN - DONE")
 
     # =========================================================
     # GRIPPER CLOSE
