@@ -173,7 +173,7 @@ class BrushClean:
         # Tool-Z rotation scrub
         #
 
-        self.points_per_segment = 6
+        self.points_per_segment = 3
 
         # =====================================================
         # 9. ROTATION SCRUB
@@ -191,7 +191,7 @@ class BrushClean:
         self.scrub_angle = 5.0
 
         # 한 왕복에 걸리는 시간
-        self.scrub_period = 0.8
+        self.scrub_period = 0.5
 
         # 한 위치에서 몇 번 왕복할지
         self.scrub_repeat = 2
