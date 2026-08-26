@@ -12,6 +12,9 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/ui', glob('ui/*.ui')),
+        ('share/' + package_name + '/launch', glob('toilet_launch/*.launch.py')),
+
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('toilet_launch', '*launch.[pxy][yma]*'))),
     ],
     install_requires=['setuptools'],
@@ -34,6 +37,7 @@ setup(
             'brush_clean = toilet_cleaning.brush_clean:main',
             'rinse = toilet_cleaning.rinse:main',
             'finish = toilet_cleaning.finish:main',
+            'dashboard = toilet_cleaning.dashboard_node:main',
         ],
     },
 )
