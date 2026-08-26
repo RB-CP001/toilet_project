@@ -34,13 +34,21 @@ def setup_doosan(node):
 class CleaningState(Enum):
 
     IDLE = auto()
+
     DETECT_LID = auto()
+
     OPEN_LID = auto()
+
     APPLY_BLEACH = auto()
+
     BRUSH_CLEAN = auto()
+
     RINSE = auto()
+
     FINISH = auto()
+
     DONE = auto()
+
     ERROR = auto()
 
 
@@ -63,9 +71,6 @@ class CleaningManager(Node):
 
         setup_doosan(self)
 
-        # IMPORTANT:
-        # 클래스 내부에서는 __dsr__xxx를 직접 사용하지 않고
-        # getattr() 사용
         self.get_logger().info(
             f"DR_init id = "
             f"{getattr(DR_init, '__dsr__id')}"
@@ -95,11 +100,11 @@ class CleaningManager(Node):
         # 3. Import cleaning modules
         # =====================================================
 
+        from .detect_lid import DetectLid
         from .brush_clean import BrushClean
 
-        # 나중에 전체 cleaning sequence 켤 때
+        # 나중에 활성화
         #
-        # from .detect_lid import DetectLid
         # from .open_lid import OpenLid
         # from .apply_bleach import ApplyBleach
         # from .rinse import Rinse
@@ -115,11 +120,11 @@ class CleaningManager(Node):
         # 5. Cleaning objects
         # =====================================================
 
+        self.detect_lid = DetectLid(self)
         self.brush_clean = BrushClean(self)
 
         # 나중에 활성화
         #
-        # self.detect_lid = DetectLid(self)
         # self.open_lid = OpenLid(self)
         # self.apply_bleach = ApplyBleach(self)
         # self.rinse = Rinse(self)
@@ -149,9 +154,12 @@ class CleaningManager(Node):
             "========== START CLEANING =========="
         )
 
-        # 지금은 BRUSH CLEAN만 테스트
+        # =====================================================
+        # START FROM DETECT LID
+        # =====================================================
+
         self.set_state(
-            CleaningState.BRUSH_CLEAN
+            CleaningState.DETECT_LID
         )
 
         while rclpy.ok():
@@ -159,10 +167,69 @@ class CleaningManager(Node):
             try:
 
                 # =============================================
+                # DETECT LID
+                # =============================================
+
+                if self.state == CleaningState.DETECT_LID:
+
+                    self.get_logger().info(
+                        "========== DETECT LID =========="
+                    )
+
+                    lid_detected = self.detect_lid.run()
+
+                    # -----------------------------------------
+                    # Lid detected
+                    # -----------------------------------------
+
+                    if lid_detected:
+
+                        self.get_logger().info(
+                            "Lid detected."
+                        )
+
+                        # OPEN_LID가 아직 비활성화되어 있으므로
+                        # 현재는 BrushClean으로 이동
+                        #
+                        # 나중에는:
+                        # self.set_state(CleaningState.OPEN_LID)
+
+                        self.set_state(
+                            CleaningState.BRUSH_CLEAN
+                        )
+
+                    # -----------------------------------------
+                    # Lid not detected
+                    # -----------------------------------------
+
+                    else:
+
+                        self.get_logger().info(
+                            "Lid not detected."
+                        )
+
+                        self.get_logger().info(
+                            "Skipping OPEN_LID."
+                        )
+
+                        # APPLY_BLEACH가 아직 비활성화되어 있으므로
+                        # 현재는 BrushClean으로 이동
+                        #
+                        # 나중에는:
+                        # self.set_state(
+                        #     CleaningState.APPLY_BLEACH
+                        # )
+
+                        self.set_state(
+                            CleaningState.BRUSH_CLEAN
+                        )
+
+
+                # =============================================
                 # BRUSH CLEAN
                 # =============================================
 
-                if self.state == CleaningState.BRUSH_CLEAN:
+                elif self.state == CleaningState.BRUSH_CLEAN:
 
                     success = self.brush_clean.run()
 
@@ -178,6 +245,7 @@ class CleaningManager(Node):
                             CleaningState.ERROR
                         )
 
+
                 # =============================================
                 # DONE
                 # =============================================
@@ -190,6 +258,7 @@ class CleaningManager(Node):
 
                     break
 
+
                 # =============================================
                 # ERROR
                 # =============================================
@@ -201,6 +270,7 @@ class CleaningManager(Node):
                     )
 
                     break
+
 
             except Exception as e:
 
