@@ -14,10 +14,10 @@ class BrushClean:
         # =====================================================
         # 0. HOME POSE
         # =====================================================
-        self.home_posj_1 = 0.0
-        self.home_posj_2 = 0.0
-        self.home_posj_3 = 50.0
-        self.home_posj_4 = 0.0  
+        self.home_posj_1 = -8.0
+        self.home_posj_2 = -19.0
+        self.home_posj_3 = 66.5
+        self.home_posj_4 = 0.0 
         self.home_posj_5 = 90.0
         self.home_posj_6 = 0.0  
 
@@ -57,7 +57,7 @@ class BrushClean:
 
         # 중요:
         # 청소 중 Z는 이 값으로 고정
-        self.clean_z = 494.32
+        self.clean_z = 484.32
 
         # 중요:
         # 브러시는 360도이므로
@@ -77,16 +77,16 @@ class BrushClean:
         #
 
         # X- 방향 벽
-        self.x_min = 390.79
+        self.x_min = 421.0
 
         # X+ 방향 벽
         self.x_max = 540.09
 
         # Y- 방향 벽
-        self.y_min = -130.70
+        self.y_min = -108.70
 
         # Y+ 방향 벽
-        self.y_max = -43.55
+        self.y_max = -25.55
 
         # =====================================================
         # 4. DISTANCE FROM CENTER TO EACH WALL
@@ -321,8 +321,8 @@ class BrushClean:
 
         movej(
             approach_j,
-            vel=self.vel,
-            acc=self.acc,
+            vel=10.0,
+            acc=10.0,
         )
 
 
@@ -452,6 +452,8 @@ class BrushClean:
             acc=self.acc,)
 
         self.node.get_logger().info("Brush returned")
+        self.move_to_home()
+
 
     # =========================================================
     # CLEAN CENTER
@@ -478,16 +480,69 @@ class BrushClean:
     def get_clean_center_pose(self):
         from DSR_ROBOT2 import posx
 
+        center_x = (421.6 + 563.0) / 2.0
+        center_y = (-25.0 + -108.0) / 2.0
+
         center_pose = posx(
-            self.center_x,
-            self.center_y,
+            center_x, 
+            center_y,
             self.clean_z,
             self.clean_rx,
             self.clean_ry,
             self.clean_rz,
         )
+
+        # center_pose = posx(
+        #     self.center_x,
+        #     self.center_y,
+        #     self.clean_z,
+        #     self.clean_rx,
+        #     self.clean_ry,
+        #     self.clean_rz,
+        # )
         return center_pose
 
+
+
+    def get_clean_center_pose_j(self):
+        from DSR_ROBOT2 import posj
+
+        center_pose_j = posj(
+            -7.0, 16.0, 64.0, -1, 98.0, -3
+        )
+
+        return center_pose_j
+
+    def set_center_xy(self):
+        from DSR_ROBOT2 import get_current_posx, DR_BASE
+
+        position, solution = get_current_posx(ref=DR_BASE)
+
+        self.center_x = position[0]
+        self.center_y = position[1]
+        #self.clean_z = position[2]
+        
+        self.node.get_logger().info(
+            f"******$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+            f"{self.center_x, self.center_y}"
+        )
+
+        # 452.88 - 390.79 = 62.09 mm
+        self.radius_x_minus = (self.center_x - self.x_min)
+        # 452.88 - 390.79 = 62.09 mm
+
+        self.radius_x_plus = (self.x_max - self.center_x)
+        # 540.09 - 452.88 = 87.21 mm
+
+        self.radius_y_minus = (self.center_y - self.y_min)
+        # -76.37 - (-130.70) = 54.33 mm
+
+        self.radius_y_plus = (self.y_max - self.center_y)
+        # -43.55 - (-76.37) = 32.82 mm
+
+
+        
+    
     # =========================================================
     # CLEAN ABOVE CENTER
     # =========================================================
@@ -502,13 +557,22 @@ class BrushClean:
         from DSR_ROBOT2 import posx
 
         return posx(
-            self.center_x,
-            self.center_y,
-            self.clean_z + 100.0,
-            self.clean_rx,
-            self.clean_ry,
-            self.clean_rz,
+            483.0,
+            -50.0,
+            411.0,
+            129.0,
+            -166.0,
+            62.0
         )
+        # return posx(
+        #     self.center_x,
+        #     self.center_y,
+        #     self.clean_z + 100.0,
+        #     self.clean_rx,
+        #     self.clean_ry,
+        #     self.clean_rz,
+        # )
+
 
     # =========================================================
     # REAL-WALL-BASED PATH
@@ -709,7 +773,8 @@ class BrushClean:
 
         from DSR_ROBOT2 import (
             posx,
-            movel,
+            movel, 
+            movej,
             wait,
             DR_BASE,
         )
@@ -719,7 +784,7 @@ class BrushClean:
         # -----------------------------------------------------
 
         above = self.get_clean_above_pose()
-        center = self.get_clean_center_pose()
+        center = self.get_clean_center_pose_j()
 
         self.node.get_logger().info(
             "Move above toilet center"
@@ -740,14 +805,15 @@ class BrushClean:
             "Insert brush into toilet"
         )
 
-        movel(
+        movej(
             center,
-            vel=30,
-            acc=30,
-            ref=DR_BASE,
+            vel=20,
+            acc=20,
         )
 
         wait(0.5)
+
+        self.set_center_xy()
 
         # -----------------------------------------------------
         # 3. Cleaning angles
@@ -842,9 +908,9 @@ class BrushClean:
                     ref=DR_BASE,
                 )
 
-            # ---------------------------------------------
-            # 쓱싹
-            # ---------------------------------------------
+            # # ---------------------------------------------
+            # # 쓱싹
+            # # ---------------------------------------------
 
             self.scrub(
                 angle
@@ -866,11 +932,10 @@ class BrushClean:
             "Return to toilet center"
         )
 
-        movel(
+        movej(
             center,
-            vel=30,
-            acc=30,
-            ref=DR_BASE,
+            vel=20,
+            acc=20,
         )
 
         # -----------------------------------------------------
@@ -925,7 +990,7 @@ class BrushClean:
             # 2. Clean toilet
             # -------------------------------------------------
 
-            #self.clean_bowl()
+            self.clean_bowl()
 
             # -------------------------------------------------
             # 3. Return brush
