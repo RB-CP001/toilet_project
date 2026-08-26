@@ -9,7 +9,7 @@ DR_init.__dsr__model = ROBOT_MODEL
 
 class DetectLid:
     def __init__(self,node):
-        from DR_common2 import posx, posj
+        from DR_common2 import posj
         self.node=node
         self.movejpoint=[
             posj(-5.59, 16.17, 54.01, -4.45, 106.05, -92.24),# 변기 뚜껑 위
@@ -18,7 +18,7 @@ class DetectLid:
         ]  
             
 
-        # node.get.logger().info(movepoint[0])
+        
         #함수 모음
     def gripper_open(self): 
         from DSR_ROBOT2 import set_digital_output 
@@ -31,11 +31,11 @@ class DetectLid:
         set_digital_output(2, 0)
 
     def lift_down(self):
-                #get_logger().info("Lift +20 mm in BASE Z")
+        #get_logger().info("Lift +20 mm in BASE Z")
         from DSR_ROBOT2 import get_current_posx, movel, DR_BASE
         position, sol= get_current_posx(ref=DR_BASE)
 
-                #get_logger().info(f"Current position: {position}, sol={sol}")
+                
 
         move_point = [
                 position[0],
@@ -46,7 +46,7 @@ class DetectLid:
                 position[5],
             ]
 
-                #get_logger().info(f"Lift target: {move_point}")
+                
 
         movel(
             move_point,
@@ -92,7 +92,7 @@ class DetectLid:
             self.node.get_logger().info(f"fcon1:{self.fcon1}")
             self.node.get_logger().info("insert_with_force else실행")
             self.go_home()
-        return self.fcon1
+        
                 
             
         
@@ -107,31 +107,12 @@ class DetectLid:
         
     def run(self):
         from DSR_ROBOT2 import (
-            set_tool,
-            set_tcp,
+            
             movej,
-            movel,
-            posx, posj,
-            movesj,
-            movec,
-            set_digital_output,
-            wait,
-            get_current_posx,
-            trans,
-            task_compliance_ctrl,
-            set_stiffnessx,
-            set_desired_force,
-            release_force,
-            release_compliance_ctrl,
-            amove_periodic,
-            set_singularity_handling,
-            check_force_condition,
-            DR_BASE,
-            DR_AVOID,
-            DR_FC_MOD_ABS,
-            DR_AXIS_Z,
+            posj,
+            
         )
-        from DR_common2 import posx, posj
+        from DR_common2 import posj
 
         #변수 모음
         self.home = posj(0, 0, 50, 0, 90, 0)
@@ -149,7 +130,7 @@ class DetectLid:
         self.gripper_close()
         self.node.get_logger().info("그리퍼 닫기")
         movej(self.movejpoint[0], vel=30, acc=30)
-        self.insert_with_force()
+        self.insert_with_force() # 힘,순응제어 키고,변기 뚜껑 감지하러 내려가는 함수
         self.go_home()
         if self.fcon1 == -1:
             return True
