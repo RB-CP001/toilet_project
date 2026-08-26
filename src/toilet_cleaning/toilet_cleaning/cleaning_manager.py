@@ -105,14 +105,7 @@ class CleaningManager(Node):
         from .apply_bleach import ApplyBleach
         from .brush_clean import BrushClean
         from .rinse import Rinse
-
-
-        # 나중에 활성화
-        #
-        # from .open_lid import OpenLid
-        # from .apply_bleach import ApplyBleach
-        # from .rinse import Rinse
-        # from .finish import Finish
+        from .finish import Finish
 
         # =====================================================
         # 4. State
@@ -129,14 +122,7 @@ class CleaningManager(Node):
         self.apply_bleach = ApplyBleach(self)
         self.brush_clean = BrushClean(self)
         self.rinse = Rinse(self)
-
-        # 나중에 활성화
-        #
-        # self.open_lid = OpenLid(self)
-        # self.apply_bleach = ApplyBleach(self)
-        # self.rinse = Rinse(self)
-        # self.finish = Finish(self)
-
+        self.finish = Finish(self)
 
     # =========================================================
     # SET STATE
@@ -232,6 +218,7 @@ class CleaningManager(Node):
                         self.set_state(
                             CleaningState.ERROR
                         )
+                        
                 # =============================================
                 # RINSE
                 # =============================================
@@ -243,6 +230,38 @@ class CleaningManager(Node):
                     if success:
                         self.set_state(
                             CleaningState.FINISH
+                        )
+                    else:
+                        self.set_state(
+                            CleaningState.ERROR
+                        )
+
+                # =============================================
+                # FINISH
+                # =============================================
+                elif self.state == CleaningState.RINSE:
+
+                    success = self.rinse.run()
+
+                    if success:
+                        self.set_state(
+                            CleaningState.FINISH
+                        )
+                    else:
+                        self.set_state(
+                            CleaningState.ERROR
+                        )
+
+                # =============================================
+                # FINISH
+                # =============================================
+                elif self.state == CleaningState.FINISH:
+
+                    success = self.finish.run()
+
+                    if success:
+                        self.set_state(
+                            CleaningState.DONE
                         )
                     else:
                         self.set_state(

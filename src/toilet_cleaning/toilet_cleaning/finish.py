@@ -3,149 +3,546 @@
 import rclpy
 import DR_init
 
+
 ROBOT_ID = "dsr01"
 ROBOT_MODEL = "m0609"
 
-DR_init.__dsr__id = ROBOT_ID
-DR_init.__dsr__model = ROBOT_MODEL
 
+# =============================================================
+# FINISH
+# =============================================================
 
 class Finish:
 
-    def __init__(self, node):
+    def __init__(self, node, vel=30, acc=30):
+
         self.node = node
+        self.vel = vel
+        self.acc = acc
+
+        self.compliance_enabled = False
+
+
+    # =========================================================
+    # HOME POSE
+    # =========================================================
+
+    def get_home_pose(self):
+
+        from DR_common2 import posj
+
+        return posj(
+            0,
+            0,
+            50,
+            0,
+            90,
+            0
+        )
+
+
+    # =========================================================
+    # LID CLOSE POINTS
+    # =========================================================
+
+    def get_lid_points(self):
+
+        from DR_common2 import posj
+
+        return [
+
+            # 뚜껑 닫을 위치 위
+            posj(
+                2.31,
+                18.53,
+                22.84,
+                -11.57,
+                87.51,
+                0.00
+            ),
+
+            # 뚜껑 닫을 위치
+            posj(
+                2.31,
+                24.80,
+                26.88,
+                -11.58,
+                87.82,
+                0.00
+            ),
+
+            # 뚜껑 닫기
+            posj(
+                2.48,
+                24.24,
+                28.54,
+                -12.24,
+                99.42,
+                0.00
+            ),
+        ]
+
+
+    # =========================================================
+    # LEVER POINTS
+    # =========================================================
+
+    def get_lever_points(self):
+
+        from DR_common2 import posj
+
+        return [
+
+            # 레버 누르기 전
+            posj(
+                5.58,
+                31.66,
+                27.65,
+                -13.56,
+                92.88,
+                0.00
+            ),
+
+            # 레버 누름 위치
+            posj(
+                5.58,
+                31.66,
+                20.56,
+                -13.56,
+                92.88,
+                0.00
+            ),
+        ]
+
+
+    # =========================================================
+    # GRIPPER CLOSE
+    # =========================================================
+
+    def gripper_close(self):
+
+        from DSR_ROBOT2 import (
+            set_digital_output,
+            wait,
+        )
+
+        self.node.get_logger().info(
+            "Gripper CLOSE"
+        )
+
+        set_digital_output(1, 1)
+        set_digital_output(2, 0)
+
+        wait(1.0)
+
+
+    # =========================================================
+    # GO HOME
+    # =========================================================
+
+    def go_home(self):
+
+        from DSR_ROBOT2 import movej
+
+        self.node.get_logger().info(
+            "Move HOME"
+        )
+
+        movej(
+            self.get_home_pose(),
+            vel=self.vel,
+            acc=self.acc
+        )
+
+
+    # =========================================================
+    # CLOSE LID
+    # =========================================================
+
+    def close_lid(self):
 
         from DSR_ROBOT2 import (
             movej,
             wait,
-            set_digital_output,
-            task_compliance_ctrl,
-            set_stiffnessx,
-            set_desired_force,
-            release_force,
-            release_compliance_ctrl,
-            set_singularity_handling,
-            DR_AVOID,
-            DR_FC_MOD_ABS,
         )
 
-        from DR_common2 import posj
+        points = self.get_lid_points()
 
-        # 명령어 모음
-        self.movej = movej
-        self.wait = wait
-        self.set_digital_output = set_digital_output
-        self.task_compliance_ctrl = task_compliance_ctrl
-        self.set_stiffnessx = set_stiffnessx
-        self.set_desired_force = set_desired_force
-        self.release_force = release_force
-        self.release_compliance_ctrl = release_compliance_ctrl
-        self.set_singularity_handling = set_singularity_handling
+        self.node.get_logger().info(
+            "========== CLOSE LID =========="
+        )
 
-        self.DR_AVOID = DR_AVOID
-        self.DR_FC_MOD_ABS = DR_FC_MOD_ABS
+        # =====================================================
+        # 1. Move above lid
+        # =====================================================
 
-        # 변수 모음
-        self.home = posj(0, 0, 50, 0, 90, 0)
+        self.node.get_logger().info(
+            "Move above lid"
+        )
 
-        self.lidpoint = [
-            posj(2.31, 18.53, 22.84, -11.57, 87.51, 0.00),  # 뚜껑 닫을 위치 위
-            posj(2.31, 24.80, 26.88, -11.58, 87.82, 0.00),  # 뚜껑 닫을 위치
-            posj(2.48, 24.24, 28.54, -12.24, 99.42, 0.00),  # 뚜껑 닫기
-        ]
+        movej(
+            points[0],
+            vel=self.vel,
+            acc=self.acc
+        )
 
-        self.movejpoint = [
-            posj(5.58, 31.66, 27.65, -13.56, 92.88, 0.00),  # 래버 누르기 전
-            posj(5.58, 31.66, 20.56, -13.56, 92.88, 0.00),  # 래버 누름
-        ]
+        wait(0.5)
 
-    # 함수 모음
-    def gripper_close(self):
-        self.node.get_logger().info("그리퍼 닫기 실행")
-        self.set_digital_output(1, 1)
-        self.set_digital_output(2, 0)
+        # =====================================================
+        # 2. Move to lid
+        # =====================================================
 
-    def go_home(self):
-        self.movej(self.home, vel=30, acc=30)
+        self.node.get_logger().info(
+            "Move to lid closing position"
+        )
 
-    # 뚜껑 닫기
-    def close_lid(self):
-        self.node.get_logger().info("close_lid 실행")
+        movej(
+            points[1],
+            vel=20,
+            acc=20
+        )
 
-        # 뚜껑 닫을 위치 위로 이동
-        self.movej(self.lidpoint[0], vel=30, acc=30)
+        wait(0.5)
 
-        # 뚜껑 닫을 위치로 내려오기
-        self.movej(self.lidpoint[1], vel=20, acc=20)
+        # =====================================================
+        # 3. Close lid
+        # =====================================================
 
-        # 뚜껑 닫기
-        self.movej(self.lidpoint[2], vel=20, acc=20)
+        self.node.get_logger().info(
+            "Close lid"
+        )
 
-        self.node.get_logger().info("close_lid 완료")
+        movej(
+            points[2],
+            vel=20,
+            acc=20
+        )
 
-    # 래버 누르고 떼기
-    def press_lever(self):
-        self.node.get_logger().info("press_lever 실행")
+        wait(0.5)
 
-        # 래버 앞으로 이동
-        self.movej(self.movejpoint[0], vel=30, acc=30)
+        self.node.get_logger().info(
+            "Lid closed"
+        )
 
-        # 힘 제어로 누르기
-        self.task_compliance_ctrl()
 
-        self.set_stiffnessx(
-            [3000, 3000, 3000, 200, 200, 200],
+    # =========================================================
+    # ENABLE COMPLIANCE
+    # =========================================================
+
+    def enable_compliance(self):
+
+        from DSR_ROBOT2 import (
+            task_compliance_ctrl,
+            set_stiffnessx,
+        )
+
+        self.node.get_logger().info(
+            "Compliance ON"
+        )
+
+        task_compliance_ctrl()
+
+        set_stiffnessx(
+            [
+                3000,
+                3000,
+                3000,
+                200,
+                200,
+                200
+            ],
             time=0.0
         )
 
-        self.set_desired_force(
-            [0, 0, -40, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0],
-            time=0.0,
-            mod=self.DR_FC_MOD_ABS
+        self.compliance_enabled = True
+
+
+    # =========================================================
+    # DISABLE COMPLIANCE
+    # =========================================================
+
+    def disable_compliance(self):
+
+        from DSR_ROBOT2 import (
+            release_compliance_ctrl,
         )
 
-        self.wait(3.0)
+        if not self.compliance_enabled:
+            return
 
-        # 힘 제어 끄기 (래버에서 떼기)
-        self.release_force(time=0.0)
-        self.release_compliance_ctrl()
+        self.node.get_logger().info(
+            "Compliance OFF"
+        )
 
-        self.movej(self.movejpoint[0], vel=20, acc=20)
+        release_compliance_ctrl()
 
-        self.node.get_logger().info("press_lever 완료")
+        self.compliance_enabled = False
 
-    # 매니저가 호출하는 함수
+
+    # =========================================================
+    # PRESS LEVER
+    # =========================================================
+
+    def press_lever(self):
+
+        from DSR_ROBOT2 import (
+            movej,
+            wait,
+            set_desired_force,
+            release_force,
+            DR_FC_MOD_ABS,
+        )
+
+        points = self.get_lever_points()
+
+        self.node.get_logger().info(
+            "========== PRESS LEVER =========="
+        )
+
+        # =====================================================
+        # 1. Move in front of lever
+        # =====================================================
+
+        movej(
+            points[0],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(0.5)
+
+        # =====================================================
+        # 2. Compliance ON
+        # =====================================================
+
+        self.enable_compliance()
+
+        try:
+
+            # =================================================
+            # 3. Press lever with force
+            # =================================================
+
+            self.node.get_logger().info(
+                "Apply lever force"
+            )
+
+            set_desired_force(
+                [
+                    0,
+                    0,
+                    -40,
+                    0,
+                    0,
+                    0
+                ],
+                [
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0
+                ],
+                time=0.0,
+                mod=DR_FC_MOD_ABS
+            )
+
+            wait(3.0)
+
+            # =================================================
+            # 4. Release force
+            # =================================================
+
+            self.node.get_logger().info(
+                "Release lever force"
+            )
+
+            release_force(
+                time=0.0
+            )
+
+            wait(0.5)
+
+        finally:
+
+            # =================================================
+            # 반드시 Compliance OFF
+            # =================================================
+
+            if self.compliance_enabled:
+
+                try:
+
+                    self.disable_compliance()
+
+                except Exception as e:
+
+                    self.node.get_logger().error(
+                        "Failed to release compliance: "
+                        f"{e}"
+                    )
+
+        # =====================================================
+        # 5. Move away from lever
+        # =====================================================
+
+        movej(
+            points[0],
+            vel=20,
+            acc=20
+        )
+
+        wait(0.5)
+
+        self.node.get_logger().info(
+            "Lever press complete"
+        )
+
+
+    # =========================================================
+    # RUN
+    # =========================================================
+
     def run(self):
-        self.node.get_logger().info("Finish 실행")
 
-        #self.set_singularity_handling(self.DR_AVOID)
+        self.node.get_logger().info(
+            "========== FINISH START =========="
+        )
 
-        # 집으로 가서 그리퍼 닫기 (그리퍼 클로즈 시 유지)
-        self.go_home()
-        self.gripper_close()
-        self.wait(1.0)
+        try:
 
-        self.close_lid()
-        self.press_lever()
-        self.go_home()
+            # =================================================
+            # 1. HOME
+            # =================================================
 
-        self.node.get_logger().info("Finish 완료")
+            self.go_home()
 
-# 이 파일만 단독으로 테스트할 때 사용
-def main(args=None):
-    rclpy.init(args=args)
-    node = rclpy.create_node("finish", namespace=ROBOT_ID)
+            # =================================================
+            # 2. Close gripper
+            # =================================================
+
+            self.gripper_close()
+
+            # =================================================
+            # 3. Close toilet lid
+            # =================================================
+
+            self.close_lid()
+
+            # =================================================
+            # 4. Press flush lever
+            # =================================================
+
+            self.press_lever()
+
+            # =================================================
+            # 5. Return HOME
+            # =================================================
+
+            self.go_home()
+
+            self.node.get_logger().info(
+                "========== FINISH COMPLETE =========="
+            )
+
+            return True
+
+        except Exception as e:
+
+            self.node.get_logger().error(
+                f"Finish failed: "
+                f"{type(e).__name__}: {e}"
+            )
+
+            return False
+
+        finally:
+
+            # =================================================
+            # Error 발생해도 compliance 해제
+            # =================================================
+
+            if self.compliance_enabled:
+
+                try:
+
+                    self.disable_compliance()
+
+                except Exception as e:
+
+                    self.node.get_logger().error(
+                        "Failed to release compliance: "
+                        f"{e}"
+                    )
+
+
+# =============================================================
+# DOOSAN SETUP
+# =============================================================
+
+def setup_doosan(node):
+
+    DR_init.__dsr__id = ROBOT_ID
+    DR_init.__dsr__model = ROBOT_MODEL
     DR_init.__dsr__node = node
 
+
+# =============================================================
+# STANDALONE TEST
+# =============================================================
+
+def main(args=None):
+
+    rclpy.init(
+        args=args
+    )
+
+    node = rclpy.create_node(
+        "finish",
+        namespace=ROBOT_ID
+    )
+
+    # =========================================================
+    # Doosan initialization
+    # =========================================================
+
+    setup_doosan(node)
+
+    # 반드시 DR_init 설정 이후
+    import DSR_ROBOT2
+
     try:
-        finish = Finish(node)
-        finish.run()
+
+        node.get_logger().info(
+            "========== FINISH STANDALONE START =========="
+        )
+
+        finish = Finish(
+            node
+        )
+
+        success = finish.run()
+
+        node.get_logger().info(
+            f"Finish result = {success}"
+        )
+
+    except Exception as e:
+
+        node.get_logger().error(
+            f"Robot Error: "
+            f"{type(e).__name__}: {e}"
+        )
 
     finally:
+
         node.destroy_node()
-        rclpy.shutdown()
+
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
+
     main()
