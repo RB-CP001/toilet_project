@@ -46,20 +46,16 @@ class OpenLid:
                 )
         from DR_common2 import posx, posj
         
-        self.node.get_logger().info('run 함수 시작')
+        
         self.gripper_open()
-        self.node.get_logger().info("그리퍼 오픈")
-        self.go_home()    
-        self.node.get_logger().info("홈 위치 도달")     
+        self.go_home()         
         self.move2lid()
-        self.node.get_logger().info("변기 손잡이로 이동")
-        self.gripper_close()
-        self.node.get_logger().info("손잡이 잡기") 
+        self.gripper_close() 
         self.node.get_logger().info("open_lid_start")
         self.open_lid_define()
         self.node.get_logger().info("open_lid_end")
         
-        wait(0.5)
+        wait(1.0)
         self.go_home()
                      
     def gripper_open(self):
@@ -95,29 +91,29 @@ class OpenLid:
                         ]
         task_compliance_ctrl(stx=[3000, 3000, 3000, 200, 200, 200], time=0.0)
         self.node.get_logger().info('컴플라이언스 ON')
-        wait(0.5)
+        wait(1.0)
         self.node.get_logger().info('move_1 시작')
         movec(open_lid_pos[0], open_lid_pos[1], vel=30, acc=30, ref=DR_BASE)
-        wait(0.5)
+        wait(2.0)
         self.node.get_logger().info(f'open_lid_pos[0]: {open_lid_pos[0]}')
         self.node.get_logger().info(f'open_lid_pos[1]: {open_lid_pos[1]}')
         self.node.get_logger().info('movec_1 완료')
         
         movec(open_lid_pos[1], open_lid_pos[2], vel=30, acc=30, ref=DR_BASE)
-        wait(0.5)
+        wait(1.0)
         self.node.get_logger().info(f'open_lid_pos[1]: {open_lid_pos[1]}')
         self.node.get_logger().info(f'open_lid_pos[2]: {open_lid_pos[2]}')
         self.node.get_logger().info('movec_2 완료')
         
         movec(open_lid_pos[2], open_lid_pos[3], vel=30, acc=30, ref=DR_BASE)
-        wait(0.5)
+        wait(2.0)
         self.node.get_logger().info(f'open_lid_pos[2]: {open_lid_pos[2]}')
         self.node.get_logger().info(f'open_lid_pos[3]: {open_lid_pos[3]}')
         self.node.get_logger().info('movec_3 완료')
-        wait(0.5)
+        wait(1.0)
         self.gripper_open()
         movej(self.lid_point[2], vel=30, acc=30)
-        wait(0.5)
+        wait(1.0)
         
         self.node.get_logger().info(f'open_lid_pos[3]: {open_lid_pos[3]}')
         self.node.get_logger().info('movej_4 완료')
