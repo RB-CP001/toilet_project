@@ -4,8 +4,10 @@ from enum import Enum, auto
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 
 import DR_init
+from toilet_cleaning_interfaces.msg import CleaningStatus
 
 
 ROBOT_ID = "dsr01"
@@ -50,6 +52,31 @@ class CleaningState(Enum):
     DONE = auto()
 
     ERROR = auto()
+
+
+STATE_TO_STATUS = {
+    CleaningState.IDLE: CleaningStatus.IDLE,
+    CleaningState.DETECT_LID: CleaningStatus.DETECT_LID,
+    CleaningState.OPEN_LID: CleaningStatus.OPEN_LID,
+    CleaningState.APPLY_BLEACH: CleaningStatus.APPLY_BLEACH,
+    CleaningState.BRUSH_CLEAN: CleaningStatus.BRUSH_CLEAN,
+    CleaningState.RINSE: CleaningStatus.RINSE,
+    CleaningState.FINISH: CleaningStatus.FINISH,
+    CleaningState.DONE: CleaningStatus.DONE,
+    CleaningState.ERROR: CleaningStatus.ERROR,
+}
+
+STATE_PROGRESS = {
+    CleaningState.IDLE: 0.0,
+    CleaningState.DETECT_LID: 0.1,
+    CleaningState.OPEN_LID: 0.2,
+    CleaningState.APPLY_BLEACH: 0.4,
+    CleaningState.BRUSH_CLEAN: 0.6,
+    CleaningState.RINSE: 0.8,
+    CleaningState.FINISH: 0.95,
+    CleaningState.DONE: 1.0,
+    CleaningState.ERROR: 0.0,
+}
 
 
 # =============================================================
@@ -113,6 +140,17 @@ class CleaningManager(Node):
 
         self.state = CleaningState.IDLE
 
+        # A late-joining UI receives the most recently published status.
+        status_qos = QoSProfile(depth=1)
+        status_qos.reliability = ReliabilityPolicy.RELIABLE
+        status_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+
+        self.status_publisher = self.create_publisher(
+            CleaningStatus,
+            "cleaning/status",
+            status_qos,
+        )
+
         # =====================================================
         # 5. Cleaning objects
         # =====================================================
@@ -124,17 +162,37 @@ class CleaningManager(Node):
         self.rinse = Rinse(self)
         self.finish = Finish(self)
 
+        self.publish_status("Ready")
+
     # =========================================================
     # SET STATE
     # =========================================================
 
-    def set_state(self, new_state):
+    def publish_status(self, message=""):
+
+        status = CleaningStatus()
+        status.stamp = self.get_clock().now().to_msg()
+        status.state = STATE_TO_STATUS[self.state]
+        status.state_name = self.state.name
+        status.progress = STATE_PROGRESS[self.state]
+        status.is_running = self.state not in {
+            CleaningState.IDLE,
+            CleaningState.DONE,
+            CleaningState.ERROR,
+        }
+        status.message = message
+
+        self.status_publisher.publish(status)
+
+    def set_state(self, new_state, message=""):
 
         self.state = new_state
 
         self.get_logger().info(
             f"STATE -> {self.state.name}"
         )
+
+        self.publish_status(message)
 
 
     # =========================================================
@@ -301,7 +359,8 @@ class CleaningManager(Node):
                 )
 
                 self.set_state(
-                    CleaningState.ERROR
+                    CleaningState.ERROR,
+                    f"{type(e).__name__}: {e}"
                 )
 
 
