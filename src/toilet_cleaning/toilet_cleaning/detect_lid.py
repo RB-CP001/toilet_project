@@ -84,7 +84,7 @@ class DetectLid:
             self.node.get_logger().info(f"fcon1:{self.fcon1}")
 
             self.node.get_logger().info("insert_with_force if 실행됨")
-            return self.fcon1
+            
         else:
             wait(3.0)
             release_force(time=0.0)
@@ -92,7 +92,7 @@ class DetectLid:
             self.node.get_logger().info(f"fcon1:{self.fcon1}")
             self.node.get_logger().info("insert_with_force else실행")
             self.go_home()
-            return self.fcon1
+        return self.fcon1
                 
             
         
