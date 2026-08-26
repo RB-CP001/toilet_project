@@ -101,6 +101,7 @@ class CleaningManager(Node):
         # =====================================================
 
         from .detect_lid import DetectLid
+        from .open_lid import OpenLid
         from .brush_clean import BrushClean
 
         # 나중에 활성화
@@ -121,6 +122,8 @@ class CleaningManager(Node):
         # =====================================================
 
         self.detect_lid = DetectLid(self)
+        self.open_lid = OpenLid(self)
+
         self.brush_clean = BrushClean(self)
 
         # 나중에 활성화
@@ -169,60 +172,26 @@ class CleaningManager(Node):
                 # =============================================
                 # DETECT LID
                 # =============================================
-
                 if self.state == CleaningState.DETECT_LID:
-
-                    self.get_logger().info(
-                        "========== DETECT LID =========="
-                    )
 
                     lid_detected = self.detect_lid.run()
 
-                    # -----------------------------------------
-                    # Lid detected
-                    # -----------------------------------------
-
                     if lid_detected:
-
-                        self.get_logger().info(
-                            "Lid detected."
-                        )
-
-                        # OPEN_LID가 아직 비활성화되어 있으므로
-                        # 현재는 BrushClean으로 이동
-                        #
-                        # 나중에는:
-                        # self.set_state(CleaningState.OPEN_LID)
-
-                        self.set_state(
-                            CleaningState.BRUSH_CLEAN
-                        )
-
-                    # -----------------------------------------
-                    # Lid not detected
-                    # -----------------------------------------
-
+                        self.set_state(CleaningState.OPEN_LID)
                     else:
+                        self.set_state(CleaningState.BRUSH_CLEAN)
 
-                        self.get_logger().info(
-                            "Lid not detected."
-                        )
+                # =============================================
+                # OPEN LIDD
+                # =============================================
+                elif self.state == CleaningState.OPEN_LID:
 
-                        self.get_logger().info(
-                            "Skipping OPEN_LID."
-                        )
+                    success = self.open_lid.run()
 
-                        # APPLY_BLEACH가 아직 비활성화되어 있으므로
-                        # 현재는 BrushClean으로 이동
-                        #
-                        # 나중에는:
-                        # self.set_state(
-                        #     CleaningState.APPLY_BLEACH
-                        # )
-
-                        self.set_state(
-                            CleaningState.BRUSH_CLEAN
-                        )
+                    if success:
+                        self.set_state(CleaningState.BRUSH_CLEAN)
+                    else:
+                        self.set_state(CleaningState.ERROR)
 
 
                 # =============================================
