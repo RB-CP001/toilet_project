@@ -7,22 +7,32 @@ from rclpy.node import Node
 
 import DR_init
 
-from .detect_lid import DetectLid
-from .open_lid import OpenLid
-from .apply_bleach import ApplyBleach
-from .brush_clean import BrushClean
-from .rinse import Rinse
-from .finish import Finish
-
 
 ROBOT_ID = "dsr01"
 ROBOT_MODEL = "m0609"
 
-DR_init.__dsr__id = ROBOT_ID
-DR_init.__dsr__model = ROBOT_MODEL
 
+# =============================================================
+# DOOSAN ROBOT SETUP
+# =============================================================
+
+def setup_doosan(node):
+    """
+    Configure Doosan robot before importing DSR_ROBOT2.
+    This function is outside the class, so name mangling does not occur.
+    """
+
+    DR_init.__dsr__id = ROBOT_ID
+    DR_init.__dsr__model = ROBOT_MODEL
+    DR_init.__dsr__node = node
+
+
+# =============================================================
+# CLEANING STATE
+# =============================================================
 
 class CleaningState(Enum):
+
     IDLE = auto()
     DETECT_LID = auto()
     OPEN_LID = auto()
@@ -34,95 +44,162 @@ class CleaningState(Enum):
     ERROR = auto()
 
 
+# =============================================================
+# CLEANING MANAGER
+# =============================================================
+
 class CleaningManager(Node):
 
     def __init__(self):
-        super().__init__("cleaning_manager", namespace=ROBOT_ID)
 
-        # Doosan Robot API가 사용할 ROS2 node
-        DR_init.__dsr__node = self
+        super().__init__(
+            "cleaning_manager",
+            namespace=ROBOT_ID
+        )
 
-        # 현재 State
+        # =====================================================
+        # 1. Setup Doosan first
+        # =====================================================
+
+        setup_doosan(self)
+
+        # IMPORTANT:
+        # 클래스 내부에서는 __dsr__xxx를 직접 사용하지 않고
+        # getattr() 사용
+        self.get_logger().info(
+            f"DR_init id = "
+            f"{getattr(DR_init, '__dsr__id')}"
+        )
+
+        self.get_logger().info(
+            f"DR_init model = "
+            f"{getattr(DR_init, '__dsr__model')}"
+        )
+
+        self.get_logger().info(
+            f"DR_init node = "
+            f"{getattr(DR_init, '__dsr__node')}"
+        )
+
+        # =====================================================
+        # 2. Import DSR_ROBOT2 AFTER setup_doosan()
+        # =====================================================
+
+        import DSR_ROBOT2
+
+        self.get_logger().info(
+            "DSR_ROBOT2 initialized"
+        )
+
+        # =====================================================
+        # 3. Import cleaning modules
+        # =====================================================
+
+        from .brush_clean import BrushClean
+
+        # 나중에 전체 cleaning sequence 켤 때
+        #
+        # from .detect_lid import DetectLid
+        # from .open_lid import OpenLid
+        # from .apply_bleach import ApplyBleach
+        # from .rinse import Rinse
+        # from .finish import Finish
+
+        # =====================================================
+        # 4. State
+        # =====================================================
+
         self.state = CleaningState.IDLE
 
-        # 각 cleaning step 객체 생성
-        self.detect_lid = DetectLid(self)
-        self.open_lid = OpenLid(self)
-        self.apply_bleach = ApplyBleach(self)
+        # =====================================================
+        # 5. Cleaning objects
+        # =====================================================
+
         self.brush_clean = BrushClean(self)
-        self.rinse = Rinse(self)
-        self.finish = Finish(self)
+
+        # 나중에 활성화
+        #
+        # self.detect_lid = DetectLid(self)
+        # self.open_lid = OpenLid(self)
+        # self.apply_bleach = ApplyBleach(self)
+        # self.rinse = Rinse(self)
+        # self.finish = Finish(self)
+
+
+    # =========================================================
+    # SET STATE
+    # =========================================================
 
     def set_state(self, new_state):
-        """Change and log the current cleaning state."""
 
         self.state = new_state
+
         self.get_logger().info(
             f"STATE -> {self.state.name}"
         )
 
+
+    # =========================================================
+    # RUN
+    # =========================================================
+
     def run(self):
-        """Run the complete cleaning state machine."""
 
         self.get_logger().info(
             "========== START CLEANING =========="
         )
 
-        self.set_state(CleaningState.DETECT_LID)
+        # 지금은 BRUSH CLEAN만 테스트
+        self.set_state(
+            CleaningState.BRUSH_CLEAN
+        )
 
         while rclpy.ok():
 
             try:
 
-                if self.state == CleaningState.DETECT_LID:
+                # =============================================
+                # BRUSH CLEAN
+                # =============================================
 
-                    lid_detected = self.detect_lid.run()
+                if self.state == CleaningState.BRUSH_CLEAN:
 
-                    if lid_detected:
-                        self.set_state(CleaningState.OPEN_LID)
-                    else:
-                        self.get_logger().info(
-                            "Lid is already open. Skipping OPEN_LID."
+                    success = self.brush_clean.run()
+
+                    if success:
+
+                        self.set_state(
+                            CleaningState.DONE
                         )
-                        self.set_state(CleaningState.APPLY_BLEACH)
 
-                elif self.state == CleaningState.OPEN_LID:
+                    else:
 
-                    self.open_lid.run()
-                    self.set_state(CleaningState.APPLY_BLEACH)
+                        self.set_state(
+                            CleaningState.ERROR
+                        )
 
-                elif self.state == CleaningState.APPLY_BLEACH:
-
-                    self.apply_bleach.run()
-                    self.set_state(CleaningState.BRUSH_CLEAN)
-
-                elif self.state == CleaningState.BRUSH_CLEAN:
-
-                    self.brush_clean.run()
-                    self.set_state(CleaningState.RINSE)
-
-                elif self.state == CleaningState.RINSE:
-
-                    self.rinse.run()
-                    self.set_state(CleaningState.FINISH)
-
-                elif self.state == CleaningState.FINISH:
-
-                    self.finish.run()
-                    self.set_state(CleaningState.DONE)
+                # =============================================
+                # DONE
+                # =============================================
 
                 elif self.state == CleaningState.DONE:
 
                     self.get_logger().info(
                         "========== CLEANING COMPLETE =========="
                     )
+
                     break
+
+                # =============================================
+                # ERROR
+                # =============================================
 
                 elif self.state == CleaningState.ERROR:
 
                     self.get_logger().error(
                         "Cleaning stopped because of an error."
                     )
+
                     break
 
             except Exception as e:
@@ -132,26 +209,41 @@ class CleaningManager(Node):
                     f"{type(e).__name__}: {e}"
                 )
 
-                self.set_state(CleaningState.ERROR)
+                self.set_state(
+                    CleaningState.ERROR
+                )
 
+
+# =============================================================
+# MAIN
+# =============================================================
 
 def main(args=None):
-    rclpy.init(args=args)
+
+    rclpy.init(
+        args=args
+    )
 
     manager = CleaningManager()
 
     try:
+
         manager.run()
 
     except KeyboardInterrupt:
+
         manager.get_logger().info(
             "Cleaning interrupted by user"
         )
 
     finally:
+
         manager.destroy_node()
-        rclpy.shutdown()
+
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
+
     main()
