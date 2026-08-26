@@ -131,8 +131,6 @@ class Finish:
         self.go_home()
 
         self.node.get_logger().info("Finish 완료")
-        return True
-
 
 # 이 파일만 단독으로 테스트할 때 사용
 def main(args=None):
