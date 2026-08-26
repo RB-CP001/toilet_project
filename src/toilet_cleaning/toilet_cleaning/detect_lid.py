@@ -140,9 +140,13 @@ class DetectLid:
             posj(-10.13,-2.14,75.49,-2.76,106.43,-92.76),# 변기 손잡이 위,
             posj(-9.01,-2.77,90.70,-3.94,93.12,-92.78) #변기 손잡이 위치
         ]
+        self.node.get_logger().info("무브 포인트 지정 완료")
         self.gripper_open()
+        self.node.get_logger().info("그리퍼 오픈")
         self.go_home()
+        self.node.get_logger().info("홈위치 도달")
         self.gripper_close()
+        self.node.get_logger().info("그리퍼 닫기")
         movej(self.movejpoint[0], vel=30, acc=30)
         self.insert_with_force()
         self.go_home()
