@@ -13,7 +13,7 @@ DR_init.__dsr__id = ROBOT_ID
 DR_init.__dsr__model = ROBOT_MODEL
 
 
-class ApplyBleach:
+class Rinse:
     def __init__(self, node, vel=30, acc=30):
         self.node = node
         self.vel = vel
@@ -160,13 +160,13 @@ class ApplyBleach:
 
 def main(args=None):
     rclpy.init(args=args)
-    node = rclpy.create_node("apply_bleach", namespace=ROBOT_ID)
+    node = rclpy.create_node("rinse", namespace=ROBOT_ID)
     DR_init.__dsr__node = node
 
     try:
         import DSR_ROBOT2 as dsr
         from DR_common2 import posx, posj
-        bleach = ApplyBleach(node)
+        bleach = Rinse(node)
         bleach.setup_robot(dsr, posx, posj)
         bleach.run()
     except Exception:
