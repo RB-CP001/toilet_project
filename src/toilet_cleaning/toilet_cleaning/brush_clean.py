@@ -11,24 +11,23 @@ class BrushClean:
 
         self.vel = vel
         self.acc = acc
+
         # =====================================================
         # 0. HOME POSE
         # =====================================================
-        self.home_posj_1 = 0.0
-        self.home_posj_2 = 0.0
-        self.home_posj_3 = 50.0
-        self.home_posj_4 = 0.0  
-        self.home_posj_5 = 90.0
-        self.home_posj_6 = 0.0  
 
+        self.home_posj_1 = -8.0
+        self.home_posj_2 = -19.0
+        self.home_posj_3 = 66.5
+        self.home_posj_4 = 0.0
+        self.home_posj_5 = 90.0
+        self.home_posj_6 = 0.0
 
         # =====================================================
         # 1. BRUSH PICK / PLACE
         # =====================================================
         #
-        # 실제 Teaching 값
-        #
-        # 브러시를 잡는 위치 = 다시 내려놓는 위치
+        # 기존 값 그대로
         #
 
         self.brush_pick_x = 479.05
@@ -39,102 +38,189 @@ class BrushClean:
         self.brush_pick_ry = 174.92
         self.brush_pick_rz = -47.68
 
-        # 브러시 위에서 접근할 거리
         self.brush_approach_height = 100.0
 
         # =====================================================
-        # 2. TOILET CLEAN CENTER
+        # 2. CLEAN ABOVE
         # =====================================================
         #
-        # 브러시를 변기 중앙에 넣었을 때
-        # 실제 Teaching 값
-        #
-        # 여기서 브러시 아래쪽도 살짝 닿음.
+        # 변기 위 안전 위치
         #
 
-        self.center_x = 452.88
-        self.center_y = -76.37
+        self.clean_above_x = 483.47
+        self.clean_above_y = -50.60
+        self.clean_above_z = 411.46
 
+        self.clean_above_rx = 129.41
+        self.clean_above_ry = -166.45
+        self.clean_above_rz = 61.73
+
+        # =====================================================
+        # 3. CLEAN CENTER
+        # =====================================================
+        #
+        # 첫 번째 사진 CENTER
+        #
+
+        self.center_x = 494.68
+        self.center_y = -76.03
+        self.center_z = 268.77
+
+        # =====================================================
+        # 4. CLEANING ORIENTATION
+        # =====================================================
+        #
+        # 브러시를 수직으로 잡고 있던 orientation.
+        #
+        # 청소 중 이 orientation을 기본 자세로 유지한다.
+        #
+        # Tool Z rotation scrub은 move_periodic()에서 처리.
+        #
+
+        self.clean_rx = 170.08
+        self.clean_ry = 179.75
+        self.clean_rz = 174.90
+
+        # =====================================================
+        # 5. WALL POINTS
+        # =====================================================
+        #
+        # 실제 변기 둘레를 닦는 순서로 P1 -> P8
+        #
+        #
+        #                 P1
+        #
+        #          P8             P2
+        #
+        #      P7                     P3 
+        #
+        #          P6             P4
+        #
+        #                 P5
+        #
+        #
+        # XYZ만 사용한다.
+        # orientation은 위의 clean_rx/ry/rz 사용.
+        #
+
+        self.wall_points = [
+
+            # P1 - TOP
+            [497.20, -17.26, 273.15],
+
+            # P2 - TOP RIGHT
+            [547.70, -33.13, 272.87],
+
+            # P3 - RIGHT
+            [558.64, -84.99, 273.67],
+
+            # P4 - BOTTOM RIGHT
+            [550.65, -113.86, 274.78],
+
+            # P5 - BOTTOM
+            [491.32, -125.84, 274.43],
+
+            # P6 - BOTTOM LEFT
+            [442.78, -118.35, 274.27],
+
+            # P7 - LEFT
+            [411.79, -82.39, 276.25],
+
+            # P8 - TOP LEFT
+            [427.66, -38.67, 275.68],
+        ]
+
+        # =====================================================
+        # 6. Z SAFETY
+        # =====================================================
+        #
+        # 기존 teaching Z로 움직였을 때
+        # 브러시가 변기 바닥에 박혔기 때문에
+        # 모든 cleaning Z를 위로 올린다.
+        #
+        # 아직 바닥에 닿으면:
+        #
+        # 20 -> 25 -> 30
+        #
+        # 너무 높으면:
+        #
+        # 20 -> 15 -> 10
+        #
+
+        self.z_safety_offset = 20.0
+
+        # =====================================================
+        # 7. CLEANING SPEED
+        # =====================================================
+
+        self.clean_vel = 10.0
+        self.clean_acc = 10.0
+
+        # =====================================================
+        # 8. SEGMENT SETTINGS
+        # =====================================================
+        #
+        # P1 -> P2 사이를 몇 개의 작은 위치로 나눌지.
+        #
+        # 각 중간 위치마다:
+        #
+        # MoveL
+        #   ↓
+        # Tool-Z rotation scrub
+        #   ↓
+        # MoveL
+        #   ↓
+        # Tool-Z rotation scrub
+        #
+
+        self.points_per_segment = 6
+
+        # =====================================================
+        # 9. ROTATION SCRUB
+        # =====================================================
+        #
+        # Tool Z축 기준:
+        #
+        #        ↺ ↻
+        #         │
+        #         │ brush
+        #
+        # +-3 degree로 시작
+        #
+
+        self.scrub_angle = 5.0
+
+        # 한 왕복에 걸리는 시간
+        self.scrub_period = 0.8
+
+        # 한 위치에서 몇 번 왕복할지
+        self.scrub_repeat = 2
+
+        # =====================================================
+        # 10. WALL FORCE
+        # =====================================================
+        #
         # 중요:
-        # 청소 중 Z는 이 값으로 고정
-        self.clean_z = 484.0
-
-        # 중요:
-        # 브러시는 360도이므로
-        # orientation은 청소 중 계속 고정
-        self.clean_rx = 173.65
-        self.clean_ry = -173.82
-        self.clean_rz = -176.06
-
-        # =====================================================
-        # 3. ACTUAL WALL LIMITS
-        # =====================================================
         #
-        # 실제로 브러시가 네 면 벽에 닿았을 때 측정한 좌표
+        # 지금은 OFF.
         #
-        # Z값은 사용하지 않음.
-        # X/Y 경계값만 사용.
+        # 먼저:
+        #
+        # 1. Z 안전 확인
+        # 2. P1~P8 경로 확인
+        # 3. Tool-Z scrub 확인
+        #
+        # 이후에:
+        #
+        # 1.0 -> 2.0 N
+        #
+        # 정도로 테스트.
         #
 
-        # X- 방향 벽
-        self.x_min = 390.79
-
-        # X+ 방향 벽
-        self.x_max = 540.09
-
-        # Y- 방향 벽
-        self.y_min = -130.70
-
-        # Y+ 방향 벽
-        self.y_max = -43.55
+        self.wall_force = 0.0
 
         # =====================================================
-        # 4. DISTANCE FROM CENTER TO EACH WALL
-        # =====================================================
-        #
-        # 중심이 정확히 기하학적 중앙일 필요가 없으므로
-        # 각 방향 반경을 따로 계산.
-        #
-
-        # 452.88 - 390.79 = 62.09 mm
-        self.radius_x_minus = (self.center_x - self.x_min)
-        # 452.88 - 390.79 = 62.09 mm
-
-        self.radius_x_plus = (self.x_max - self.center_x)
-        # 540.09 - 452.88 = 87.21 mm
-
-        self.radius_y_minus = (self.center_y - self.y_min)
-        # -76.37 - (-130.70) = 54.33 mm
-
-        self.radius_y_plus = (self.y_max - self.center_y)
-        # -43.55 - (-76.37) = 32.82 mm
-
-        # =====================================================
-        # 5. CLEANING PARAMETERS
-        # =====================================================
-
-        # 변기 둘레를 몇 도 간격으로 이동할지
-        #
-        # 15도 -> 24 points
-        #
-        self.angle_step = 15
-
-        # Periodic scrub
-
-        # XY 왕복
-        self.scrub_amp = 6.0 # ±6 mm
-
-        # 회전 왕복
-        self.rotate_amp = 5.0 # +,-5 deg
-
-        # 주기
-        self.scrub_period = 0.5
-        self.rotate_period = 0.5
-
-        self.scrub_repeat = 3
-
-        # =====================================================
-        # 6. COMPLIANCE
+        # 11. COMPLIANCE
         # =====================================================
 
         self.compliance_enabled = False
@@ -144,26 +230,32 @@ class BrushClean:
     # =========================================================
 
     def move_to_home(self):
-        from DSR_ROBOT2 import (movej, DR_BASE)
+        from DSR_ROBOT2 import movej
 
-        self.node.get_logger().info("========== RESET POSITION: HOME ==========")
-        movej(self.get_home_posej(), vel=self.vel, acc=self.acc)
+        self.node.get_logger().info(
+            "========== RESET POSITION: HOME =========="
+        )
 
+        movej(
+            self.get_home_posej(),
+            vel=self.vel,
+            acc=self.acc,
+        )
 
     def get_home_posej(self):
         from DSR_ROBOT2 import posj
 
         home_posej = posj(
-                self.home_posj_1,
-                self.home_posj_2,
-                self.home_posj_3,
-                self.home_posj_4,
-                self.home_posj_5,
-                self.home_posj_6,
-            )
+            self.home_posj_1,
+            self.home_posj_2,
+            self.home_posj_3,
+            self.home_posj_4,
+            self.home_posj_5,
+            self.home_posj_6,
+        )
 
         return home_posej
-    
+
     # =========================================================
     # GRIPPER
     # =========================================================
@@ -171,10 +263,12 @@ class BrushClean:
     def gripper_open(self):
         """
         Gripper OPEN.
-
         """
 
-        from DSR_ROBOT2 import (set_digital_output, wait)
+        from DSR_ROBOT2 import (
+            set_digital_output,
+            wait,
+        )
 
         self.node.get_logger().info("Gripper OPEN")
 
@@ -188,7 +282,10 @@ class BrushClean:
         Gripper CLOSE.
         """
 
-        from DSR_ROBOT2 import (set_digital_output, wait)
+        from DSR_ROBOT2 import (
+            set_digital_output,
+            wait,
+        )
 
         self.node.get_logger().info("Gripper CLOSE")
 
@@ -204,7 +301,9 @@ class BrushClean:
     def get_brush_pick_pose(self):
         from DSR_ROBOT2 import posx
 
-        self.node.get_logger().info("Get brush pick pose")
+        self.node.get_logger().info(
+            "Get brush pick pose"
+        )
 
         pick_point = posx(
             self.brush_pick_x,
@@ -216,14 +315,14 @@ class BrushClean:
         )
 
         self.node.get_logger().info(
-                    f"pick point: {pick_point}"
-                )
-        
+            f"pick point: {pick_point}"
+        )
+
         return pick_point
 
     def get_brush_approach_pose(self):
         """
-        브러시 잡는 위치 바로 위. 
+        브러시 잡는 위치 바로 위.
 
         X/Y/orientation은 그대로 두고
         BASE Z만 +100 mm.
@@ -231,7 +330,9 @@ class BrushClean:
 
         from DSR_ROBOT2 import posx, posj
 
-        self.node.get_logger().info("Get brush approach pose")
+        self.node.get_logger().info(
+            "Get brush approach pose"
+        )
 
         approach_point = posx(
             self.brush_pick_x,
@@ -242,39 +343,71 @@ class BrushClean:
             self.brush_pick_ry,
             self.brush_pick_rz,
         )
-        self.node.get_logger().info(f"approach point: {approach_point}")
-        
-        return approach_point
 
+        self.node.get_logger().info(
+            f"approach point: {approach_point}"
+        )
+
+        return approach_point
 
     def get_brush_approach_posej(self):
         """
-        브러시 잡는 위치 바로 위. 
-
-        X/Y/orientation은 그대로 두고
-        BASE Z만 +100 mm.
+        브러시 잡는 위치 바로 위.
         """
 
         from DSR_ROBOT2 import posj
 
-        self.node.get_logger().info("Get brush approach pose")
-
-        brush_approach_posj = posj(
-            25.06,
-            29.35,
-            30.58,
-            -2.98,
-            118.38,
-            -62.38
+        self.node.get_logger().info(
+            "Get brush approach posej"
         )
 
-        self.node.get_logger().info(f"approach point: {brush_approach_posj}")
-        
+        brush_approach_posj = posj(
+            26.0,
+            25.0,
+            45.0,
+            -2.5,
+            107.0,
+            -54.0,
+        )
+
+        self.node.get_logger().info(
+            f"approach point: {brush_approach_posj}"
+        )
+
         return brush_approach_posj
+
+    def get_brush_pick_posej(self):
+        """
+        브러시 잡는 위치
+        """
+
+        from DSR_ROBOT2 import posj
+
+        self.node.get_logger().info(
+            "Get brush approach posej"
+        )
+
+        brush_pick_posj = posj(
+            27.0,
+            29.0,
+            54.0,
+            -5.0,
+            100.0,
+            -54.0,
+        )
+
+        self.node.get_logger().info(
+            f"pick point: {brush_pick_posj}"
+        )
+
+        return brush_pick_posj
 
     # =========================================================
     # PICK BRUSH
     # =========================================================
+    #
+    # 기존 코드 그대로
+    #
 
     def pick_brush(self):
         """
@@ -282,56 +415,37 @@ class BrushClean:
         Approach -> Gripper OPEN -> Pick -> Gripper CLOSE -> Lift
         """
 
-        from DSR_ROBOT2 import (movel, movej, wait, DR_BASE, posx, get_current_posx)
+        from DSR_ROBOT2 import (
+            movel,
+            movej,
+            wait,
+            DR_BASE,
+            posx,
+            get_current_posx,
+        )
 
         self.move_to_home()
 
-        self.node.get_logger().info("========== PICK BRUSH ==========")
+        self.node.get_logger().info(
+            "========== PICK BRUSH =========="
+        )
 
-        approach_j = self.get_brush_approach_posej() 
-        approach = self.get_brush_approach_pose()
-        pick = self.get_brush_pick_pose()
+        approach_j = self.get_brush_approach_posej()
+        pick_j = self.get_brush_pick_posej()
 
         # -----------------------------------------------------
         # 1. 브러시 위로 이동
         # -----------------------------------------------------
 
-        self.node.get_logger().info("Move above brush")
-
+        self.node.get_logger().info(
+            "Move above brush"
+        )
 
         movej(
             approach_j,
-            vel=self.vel,
-            acc=self.acc,
+            vel=10.0,
+            acc=10.0,
         )
-
-
-        ##################################
-
-        position, sol = get_current_posx(ref=DR_BASE)
-
-        self.node.get_logger().info(f"Current position: {position}, sol={sol}")
-
-        move_point = posx(
-            position[0],
-            position[1],
-            position[2] - 70.0,
-            position[3],
-            position[4],
-            position[5],
-        )
-
-        movel(move_point, vel=self.vel, acc=self.acc)
-
-        ###############################
-
-
-        # movel(
-        #     approach,
-        #     vel=self.vel,
-        #     acc=self.acc,
-        #     ref=DR_BASE,
-        # )
 
         # -----------------------------------------------------
         # 2. Gripper open
@@ -343,13 +457,16 @@ class BrushClean:
         # 3. 위 -> 아래
         # -----------------------------------------------------
 
-        self.node.get_logger().info("Move down to brush")
+        wait(0.5)
 
-        movel(
-            pick,
-            vel=30,
-            acc=30,
-            ref=DR_BASE,
+        self.node.get_logger().info(
+            "Move down to brush"
+        )
+
+        movej(
+            pick_j,
+            vel=self.vel,
+            acc=self.acc,
         )
 
         wait(0.5)
@@ -366,24 +483,28 @@ class BrushClean:
         # 5. 수직으로 올리기
         # -----------------------------------------------------
 
-        self.node.get_logger().info("Lift brush")
-
-        movel(
-            approach,
-            vel=self.vel,
-            acc=self.acc,
-            ref=DR_BASE,
+        self.node.get_logger().info(
+            "Lift brush"
         )
 
-        self.node.get_logger().info("Brush picked")
+        movej(
+            approach_j,
+            vel=self.vel,
+            acc=self.acc,
+        )
 
+        self.node.get_logger().info(
+            "Brush picked"
+        )
 
         self.move_to_home()
-
 
     # =========================================================
     # PLACE BRUSH
     # =========================================================
+    #
+    # 기존 코드 그대로
+    #
 
     def place_brush(self):
         """
@@ -393,68 +514,42 @@ class BrushClean:
         """
 
         from DSR_ROBOT2 import (
-            movel, movej,
+            movel,
+            movej,
             wait,
             DR_BASE,
-            get_current_posx
+            get_current_posx,
         )
 
         self.move_to_home()
 
-        self.node.get_logger().info("========== PLACE BRUSH ==========")
-
-        approach = self.get_brush_approach_pose()
+        self.node.get_logger().info(
+            "========== PLACE BRUSH =========="
+        )
 
         approach_j = self.get_brush_approach_posej()
-
-
-        ##################################
-
-        position, sol = get_current_posx(ref=DR_BASE)
-
-        self.node.get_logger().info(f"Current position: {position}, sol={sol}")
-
-        move_point = [
-            position[0],
-            position[1],
-            position[2] - 70.0,
-            position[3],
-            position[4],
-            position[5],
-        ]
-
-
-        ###############################
-
-        pickup = self.get_brush_pick_pose()
-
-        place = self.get_brush_pick_pose()
+        pick_j = self.get_brush_pick_posej()
 
         # -----------------------------------------------------
         # 1. 보관 위치 위
         # -----------------------------------------------------
 
-        # movel(
-        #     approach,
-        #     vel=self.vel,
-        #     acc=self.acc,
-        #     ref=DR_BASE,
-        # )
-
         movej(
             approach_j,
             vel=self.vel,
-            acc=self.acc,)
+            acc=self.acc,
+        )
 
         # -----------------------------------------------------
         # 2. 위 -> 아래
         # -----------------------------------------------------
 
-        movel(
-            pickup,
+        wait(0.5)
+
+        movej(
+            pick_j,
             vel=self.vel,
             acc=self.acc,
-            ref=DR_BASE,
         )
 
         wait(0.5)
@@ -471,147 +566,240 @@ class BrushClean:
         # 4. 그리퍼만 수직 상승
         # -----------------------------------------------------
 
-        movel(
-            approach,
+        movej(
+            approach_j,
             vel=self.vel,
             acc=self.acc,
-            ref=DR_BASE,
         )
 
-        self.node.get_logger().info("Brush returned")
-
-    # =========================================================
-    # CLEAN CENTER
-    # =========================================================
-
-    def get_clean_center_posej(self):
-        from DSR_ROBOT2 import posj
-
-        center_posej = posj(
-            self.home_posj_1,
-            self.home_posj_2,
-            self.home_posj_3,
-            self.home_posj_4,
-            self.home_posj_5,
-            self.home_posj_6,
+        self.node.get_logger().info(
+            "Brush returned"
         )
 
-        return center_posej
+        self.move_to_home()
 
     # =========================================================
-    # CLEAN CENTER
-    # =========================================================
-
-    def get_clean_center_pose(self):
-        from DSR_ROBOT2 import posx
-
-        center_pose = posx(
-            self.center_x,
-            self.center_y,
-            self.clean_z,
-            self.clean_rx,
-            self.clean_ry,
-            self.clean_rz,
-        )
-        return center_pose
-
-    # =========================================================
-    # CLEAN ABOVE CENTER
+    # CLEAN ABOVE
     # =========================================================
 
     def get_clean_above_pose(self):
-        """
-        변기에서 솔을 넣고/뺄 때 사용하는 안전 위치.
+        from DSR_ROBOT2 import posx
 
-        중앙 기준 Z + 100 mm.
+        return posx(
+            self.clean_above_x,
+            self.clean_above_y,
+            self.clean_above_z,
+            self.clean_above_rx,
+            self.clean_above_ry,
+            self.clean_above_rz,
+        )
+
+    # =========================================================
+    # SAFE CLEAN CENTER
+    # =========================================================
+
+    def get_clean_center_pose(self):
+        """
+        Center의 X/Y는 그대로.
+
+        바닥에 박히는 것을 막기 위해
+        center Z에 safety offset을 더한다.
         """
 
         from DSR_ROBOT2 import posx
+
+        safe_z = (
+            self.center_z
+            + self.z_safety_offset
+        )
+
+        self.node.get_logger().info(
+            f"Safe CENTER = "
+            f"({self.center_x:.2f}, "
+            f"{self.center_y:.2f}, "
+            f"{safe_z:.2f})"
+        )
 
         return posx(
             self.center_x,
             self.center_y,
-            self.clean_z + 100.0,
+            safe_z,
             self.clean_rx,
             self.clean_ry,
             self.clean_rz,
         )
 
     # =========================================================
-    # REAL-WALL-BASED PATH
+    # SAFE WALL POINT
     # =========================================================
 
-    def get_cleaning_xy(self, angle_deg):
+    def get_safe_wall_point(self, point):
         """
-        실제 네 면 측정값을 이용하여 XY 경로 생성.
+        실제 teaching point의 X/Y는 유지.
 
-        중심에서 각 방향까지의 거리가 서로 다르므로
-        +X / -X / +Y / -Y 반경을 따로 사용한다.
+        Z만 safety offset 만큼 위로 올린다.
         """
 
-        theta = math.radians(angle_deg)
-
-        cos_t = math.cos(theta)
-        sin_t = math.sin(theta)
-
-        # -----------------------------------------------------
-        # X radius
-        # -----------------------------------------------------
-
-        if cos_t >= 0:
-            radius_x = self.radius_x_plus
-        else:
-            radius_x = self.radius_x_minus
-
-        # -----------------------------------------------------
-        # Y radius
-        # -----------------------------------------------------
-
-        if sin_t >= 0:
-            radius_y = self.radius_y_plus
-        else:
-            radius_y = self.radius_y_minus
-
-        x = (self.center_x + radius_x * cos_t)
-
-        y = (self.center_y + radius_y * sin_t)
-
-        return x, y
+        return [
+            point[0],
+            point[1],
+            point[2] + self.z_safety_offset,
+        ]
 
     # =========================================================
-    # NUMERICAL TANGENT
+    # GET WALL POSE
     # =========================================================
 
-    def get_tangent(self, angle_deg):
+    def get_wall_pose(self, point):
+        from DSR_ROBOT2 import posx
+
+        safe_point = self.get_safe_wall_point(
+            point
+        )
+
+        return posx(
+            safe_point[0],
+            safe_point[1],
+            safe_point[2],
+            self.clean_rx,
+            self.clean_ry,
+            self.clean_rz,
+        )
+
+    # =========================================================
+    # CREATE INTERMEDIATE WALL POINTS
+    # =========================================================
+
+    def make_segment_points(
+        self,
+        p1,
+        p2,
+    ):
         """
-        현재 경로의 tangent를 수치적으로 계산한다.
+        P1 -> P2 사이를 작은 MoveL point로 나눈다.
 
-        P(theta + dtheta) - P(theta - dtheta)
+        예:
 
-        실제 네 면 좌표를 기반으로 만든 비대칭 경로이므로
-        단순 타원 공식보다 이 방식이 편하다.
+        P1 ---- o ---- o ---- o ---- o ---- P2
+
+        각 o에서 Tool-Z rotation scrub 실행.
         """
 
-        delta = 1.0
+        from DSR_ROBOT2 import posx
 
-        x1, y1 = self.get_cleaning_xy(angle_deg - delta)
+        points = []
 
-        x2, y2 = self.get_cleaning_xy(angle_deg + delta)
+        for i in range(
+            1,
+            self.points_per_segment + 1,
+        ):
 
-        tx = x2 - x1
-        ty = y2 - y1
-
-        length = math.sqrt(tx * tx + ty * ty)
-
-        if length < 1e-6:
-            raise ValueError(
-                "Cannot calculate tangent."
+            t = (
+                i
+                / self.points_per_segment
             )
 
-        tx /= length
-        ty /= length
+            # -------------------------------------------------
+            # X interpolation
+            # -------------------------------------------------
 
-        return tx, ty
+            x = (
+                p1[0]
+                + (p2[0] - p1[0]) * t
+            )
+
+            # -------------------------------------------------
+            # Y interpolation
+            # -------------------------------------------------
+
+            y = (
+                p1[1]
+                + (p2[1] - p1[1]) * t
+            )
+
+            # -------------------------------------------------
+            # Original Z interpolation
+            # -------------------------------------------------
+
+            original_z = (
+                p1[2]
+                + (p2[2] - p1[2]) * t
+            )
+
+            # -------------------------------------------------
+            # Safety Z
+            # -------------------------------------------------
+
+            z = (
+                original_z
+                + self.z_safety_offset
+            )
+
+            target = posx(
+                x,
+                y,
+                z,
+                self.clean_rx,
+                self.clean_ry,
+                self.clean_rz,
+            )
+
+            points.append(
+                target
+            )
+
+        return points
+
+    # =========================================================
+    # ROTATION SCRUB
+    # =========================================================
+
+    def scrub_rotation(self):
+        """
+        현재 XYZ 위치는 유지하고
+        Tool Z축을 기준으로 브러시를 좌우 회전.
+
+                    │
+                    │
+                    │
+                   brush
+                ↺       ↻
+
+        Tool Z축과 실제 브러시 축이 일치해야
+        원하는 동작이 나온다.
+        """
+
+        from DSR_ROBOT2 import (
+            move_periodic,
+            DR_TOOL,
+        )
+
+        if self.scrub_angle <= 0.0:
+            return
+
+        self.node.get_logger().info(
+            f"Rotation scrub | "
+            f"±{self.scrub_angle:.1f} deg"
+        )
+
+        move_periodic(
+            amp=[
+                0.0,                # Tool X
+                0.0,                # Tool Y
+                0.0,                # Tool Z
+                0.0,                # Tool RX
+                0.0,                # Tool RY
+                self.scrub_angle,   # Tool RZ
+            ],
+
+            period=self.scrub_period,
+
+            atime=0.2,
+
+            repeat=self.scrub_repeat,
+
+            ref=DR_TOOL,
+        )
 
     # =========================================================
     # COMPLIANCE ON
@@ -619,28 +807,47 @@ class BrushClean:
 
     def enable_compliance(self):
         """
-        XY 방향에 compliance를 줘서
-        실제 벽과 경로 오차를 흡수한다.
+        중요:
 
-        Z는 비교적 높은 stiffness 유지.
+        set_ref_coord()는 compliance 들어가기 전에
+        여기서 딱 한 번만 호출한다.
+
+        이전에 발생한:
+
+        TASK_COMPLIANCE_CONTROL
+        rejected eSetGlobalRefCoord
+
+        문제를 피하기 위해
+        apply_wall_force()에서는 set_ref_coord()를
+        다시 호출하지 않는다.
         """
 
         from DSR_ROBOT2 import (
             task_compliance_ctrl,
+            set_ref_coord,
+            DR_BASE,
         )
 
         self.node.get_logger().info(
             "Compliance ON"
         )
 
+        # -----------------------------------------------------
+        # 반드시 compliance 전에 설정
+        # -----------------------------------------------------
+
+        set_ref_coord(
+            DR_BASE
+        )
+
         task_compliance_ctrl(
             stx=[
-                500.0,    # X
-                500.0,    # Y
-                3000.0,   # Z
-                200.0,    # RX
-                200.0,    # RY
-                200.0,    # RZ
+                500.0,     # X
+                500.0,     # Y
+                3000.0,    # Z
+                200.0,     # RX
+                200.0,     # RY
+                200.0,     # RZ
             ],
             time=0.5,
         )
@@ -668,53 +875,255 @@ class BrushClean:
         self.compliance_enabled = False
 
     # =========================================================
-    # PERIODIC SCRUB
+    # WALL NORMAL
     # =========================================================
 
-    def scrub(self, angle_deg):
+    def calculate_wall_normal(
+        self,
+        p1,
+        p2,
+    ):
         """
-        현재 벽의 tangent 방향으로 쓱싹.
+        P1 -> P2의 진행 방향 tangent를 구한 후,
+        그 방향에 수직인 wall normal을 계산한다.
 
-        Z와 orientation은 바뀌지 않는다.
+        두 normal 중 CENTER 반대쪽을 선택한다.
         """
+
+        dx = (
+            p2[0] - p1[0]
+        )
+
+        dy = (
+            p2[1] - p1[1]
+        )
+
+        length = math.sqrt(
+            dx * dx
+            + dy * dy
+        )
+
+        if length < 1e-6:
+            raise ValueError(
+                "Wall points are too close."
+            )
+
+        # -----------------------------------------------------
+        # tangent
+        # -----------------------------------------------------
+
+        tx = dx / length
+        ty = dy / length
+
+        # -----------------------------------------------------
+        # perpendicular normal
+        # -----------------------------------------------------
+
+        nx = -ty
+        ny = tx
+
+        # -----------------------------------------------------
+        # Segment midpoint
+        # -----------------------------------------------------
+
+        mid_x = (
+            p1[0] + p2[0]
+        ) / 2.0
+
+        mid_y = (
+            p1[1] + p2[1]
+        ) / 2.0
+
+        # -----------------------------------------------------
+        # CENTER -> WALL
+        # -----------------------------------------------------
+
+        vx = (
+            mid_x
+            - self.center_x
+        )
+
+        vy = (
+            mid_y
+            - self.center_y
+        )
+
+        # -----------------------------------------------------
+        # 현재 normal이 center 쪽이면 반대로 뒤집음
+        # -----------------------------------------------------
+
+        dot = (
+            nx * vx
+            + ny * vy
+        )
+
+        if dot < 0:
+            nx = -nx
+            ny = -ny
+
+        return nx, ny
+
+    # =========================================================
+    # APPLY WALL FORCE
+    # =========================================================
+
+    def apply_wall_force(
+        self,
+        p1,
+        p2,
+    ):
+        """
+        현재 segment의 벽 방향으로 force 적용.
+
+        wall_force == 0이면 아무것도 하지 않는다.
+
+        중요:
+        여기서는 set_ref_coord()를 호출하지 않는다.
+        """
+
+        if self.wall_force <= 0.0:
+            return
 
         from DSR_ROBOT2 import (
-            move_periodic,
-            DR_BASE,
+            set_desired_force,
+            DR_FC_MOD_REL,
         )
 
-        tx, ty = self.get_tangent(
-            angle_deg
+        nx, ny = (
+            self.calculate_wall_normal(
+                p1,
+                p2,
+            )
         )
 
-        amp_x = (
-            self.scrub_amp * tx
+        fx = (
+            nx
+            * self.wall_force
         )
 
-        amp_y = (
-            self.scrub_amp * ty
+        fy = (
+            ny
+            * self.wall_force
         )
 
         self.node.get_logger().info(
-            f"Scrub | "
-            f"amp_x={amp_x:.2f} mm, "
-            f"amp_y={amp_y:.2f} mm"
+            f"Wall force | "
+            f"Fx={fx:.2f} N | "
+            f"Fy={fy:.2f} N"
         )
 
-        move_periodic(
-            amp=[
-                amp_x,
-                amp_y,
+        set_desired_force(
+            fd=[
+                fx,
+                fy,
                 0.0,
                 0.0,
                 0.0,
                 0.0,
             ],
-            period=self.scrub_period,
-            atime=0.3,
-            repeat=self.scrub_repeat,
-            ref=DR_BASE,
+
+            dir=[
+                1,
+                1,
+                0,
+                0,
+                0,
+                0,
+            ],
+
+            time=0.3,
+
+            mod=DR_FC_MOD_REL,
         )
+
+    # =========================================================
+    # CLEAN ONE WALL SEGMENT
+    # =========================================================
+
+    def clean_wall_segment(
+        self,
+        p1,
+        p2,
+        segment_number,
+    ):
+        """
+        P1 -> P2 청소.
+
+        각 중간 위치마다:
+
+        MoveL
+          ↓
+        Tool-Z rotation scrub
+          ↓
+        MoveL
+          ↓
+        Tool-Z rotation scrub
+        """
+
+        from DSR_ROBOT2 import (
+            movel,
+            DR_BASE,
+        )
+
+        self.node.get_logger().info(
+            "--------------------------------"
+        )
+
+        self.node.get_logger().info(
+            f"CLEAN SEGMENT {segment_number}"
+        )
+
+        # -----------------------------------------------------
+        # Wall force
+        # -----------------------------------------------------
+
+        if self.wall_force > 0.0:
+
+            self.apply_wall_force(
+                p1,
+                p2,
+            )
+
+        # -----------------------------------------------------
+        # Generate intermediate points
+        # -----------------------------------------------------
+
+        targets = (
+            self.make_segment_points(
+                p1,
+                p2,
+            )
+        )
+
+        # -----------------------------------------------------
+        # Move + scrub
+        # -----------------------------------------------------
+
+        for i, target in enumerate(
+            targets
+        ):
+
+            self.node.get_logger().info(
+                f"Segment {segment_number} | "
+                f"Point {i + 1}/{len(targets)}"
+            )
+
+            # ---------------------------------------------
+            # 벽 따라 조금 이동
+            # ---------------------------------------------
+
+            movel(
+                target,
+                vel=self.clean_vel,
+                acc=self.clean_acc,
+                ref=DR_BASE,
+            )
+
+            # ---------------------------------------------
+            # 현재 위치에서 회전 scrub
+            # ---------------------------------------------
+
+            self.scrub_rotation()
 
     # =========================================================
     # CLEAN BOWL
@@ -722,196 +1131,208 @@ class BrushClean:
 
     def clean_bowl(self):
         """
-        실제 변기 청소.
+        Cleaning sequence:
 
-        1. 변기 중앙 위로 이동
-        2. 중앙으로 수직 진입
-        3. 첫 wall point로 이동
-        4. Compliance ON
-        5. 둘레 이동 + periodic scrub
-        6. Compliance OFF
-        7. 중앙 복귀
-        8. 위로 수직 탈출
+                      ABOVE
+                        ↓
+                  SAFE CENTER
+                        ↓
+                       P1
+
+        P1 -- scrub -- scrub -- scrub --> P2
+        P2 -- scrub -- scrub -- scrub --> P3
+        P3 -- scrub -- scrub -- scrub --> P4
+        P4 -- scrub -- scrub -- scrub --> P5
+        P5 -- scrub -- scrub -- scrub --> P6
+        P6 -- scrub -- scrub -- scrub --> P7
+        P7 -- scrub -- scrub -- scrub --> P8
+        P8 -- scrub -- scrub -- scrub --> P1
+
+                        ↓
+                  SAFE CENTER
+                        ↓
+                      ABOVE
         """
 
         from DSR_ROBOT2 import (
-            posx,
             movel,
             wait,
+            release_force,
             DR_BASE,
         )
 
-        # -----------------------------------------------------
-        # 1. 변기 중앙 위
-        # -----------------------------------------------------
+        self.node.get_logger().info(
+            "========== CLEAN BOWL =========="
+        )
 
-        above = self.get_clean_above_pose()
-        center = self.get_clean_center_pose()
+        above = (
+            self.get_clean_above_pose()
+        )
+
+        center = (
+            self.get_clean_center_pose()
+        )
+
+        # =====================================================
+        # 1. ABOVE TOILET
+        # =====================================================
 
         self.node.get_logger().info(
-            "Move above toilet center"
+            "Move above toilet"
         )
 
         movel(
             above,
-            vel=30,
-            acc=30,
+            vel=15,
+            acc=15,
             ref=DR_BASE,
         )
 
-        # -----------------------------------------------------
-        # 2. 중앙으로 내려가기
-        # -----------------------------------------------------
+        # =====================================================
+        # 2. SAFE CENTER
+        # =====================================================
 
         self.node.get_logger().info(
-            "Insert brush into toilet"
+            "Move to SAFE center"
         )
 
         movel(
             center,
-            vel=30,
-            acc=30,
+            vel=self.clean_vel,
+            acc=self.clean_acc,
             ref=DR_BASE,
         )
 
         wait(0.5)
 
-        # -----------------------------------------------------
-        # 3. Cleaning angles
-        # -----------------------------------------------------
+        # =====================================================
+        # 3. SAFE CENTER -> SAFE P1
+        # =====================================================
 
-        angles = list(
-            range(
-                0,
-                360,
-                self.angle_step,
+        first_point = (
+            self.wall_points[0]
+        )
+
+        first_pose = (
+            self.get_wall_pose(
+                first_point
             )
         )
 
-        # -----------------------------------------------------
-        # 4. 첫 wall 위치로 이동
-        # -----------------------------------------------------
-
-        first_angle = angles[0]
-
-        x, y = self.get_cleaning_xy(
-            first_angle
-        )
-
-        first_target = posx(
-            x,
-            y,
-            self.clean_z,
-            self.clean_rx,
-            self.clean_ry,
-            self.clean_rz,
-        )
-
         self.node.get_logger().info(
-            "Move to first wall"
+            "Move SAFE center -> SAFE P1"
         )
 
         movel(
-            first_target,
-            vel=30,
-            acc=30,
+            first_pose,
+            vel=self.clean_vel,
+            acc=self.clean_acc,
             ref=DR_BASE,
         )
 
-        # -----------------------------------------------------
-        # 5. Compliance ON
-        # -----------------------------------------------------
+        wait(0.5)
 
-        self.enable_compliance()
+        # =====================================================
+        # 4. FORCE / COMPLIANCE
+        # =====================================================
 
-        # -----------------------------------------------------
-        # 6. Clean all wall sections
-        # -----------------------------------------------------
+        use_force_control = (
+            self.wall_force > 0.0
+        )
 
-        for i, angle in enumerate(angles):
+        if use_force_control:
+            self.enable_compliance()
 
-            self.node.get_logger().info(
-                "--------------------------------"
+        try:
+
+            number_of_points = (
+                len(
+                    self.wall_points
+                )
             )
 
-            self.node.get_logger().info(
-                f"Cleaning "
-                f"{i + 1}/{len(angles)} "
-                f"| angle={angle}"
-            )
+            # =================================================
+            # 5. CLEAN FULL TOILET WALL
+            # =================================================
 
-            x, y = self.get_cleaning_xy(
-                angle
-            )
+            for i in range(
+                number_of_points
+            ):
 
-            target = posx(
-                x,
-                y,
-
-                # Z 항상 고정
-                self.clean_z,
-
-                # Orientation 항상 고정
-                self.clean_rx,
-                self.clean_ry,
-                self.clean_rz,
-            )
-
-            # ---------------------------------------------
-            # 다음 벽 구간
-            # ---------------------------------------------
-
-            if i > 0:
-                movel(
-                    target,
-                    vel=10,
-                    acc=10,
-                    ref=DR_BASE,
+                current_point = (
+                    self.wall_points[i]
                 )
 
-            # ---------------------------------------------
-            # 쓱싹
-            # ---------------------------------------------
+                next_point = (
+                    self.wall_points[
+                        (i + 1)
+                        % number_of_points
+                    ]
+                )
 
-            self.scrub(
-                angle
-            )
+                self.clean_wall_segment(
+                    current_point,
+                    next_point,
+                    i + 1,
+                )
 
-            wait(0.2)
+            # =================================================
+            # 6. FORCE OFF
+            # =================================================
 
-        # -----------------------------------------------------
-        # 7. Compliance OFF
-        # -----------------------------------------------------
+            if use_force_control:
 
-        self.disable_compliance()
+                self.node.get_logger().info(
+                    "Release wall force"
+                )
 
-        # -----------------------------------------------------
-        # 8. 중앙으로 돌아오기
-        # -----------------------------------------------------
+                release_force()
+
+                wait(0.3)
+
+        finally:
+
+            # -------------------------------------------------
+            # Error 발생해도 Force 해제
+            # -------------------------------------------------
+
+            if use_force_control:
+
+                try:
+                    release_force()
+
+                except Exception:
+                    pass
+
+                self.disable_compliance()
+
+        # =====================================================
+        # 7. RETURN SAFE CENTER
+        # =====================================================
 
         self.node.get_logger().info(
-            "Return to toilet center"
+            "Return to SAFE center"
         )
 
         movel(
             center,
-            vel=30,
-            acc=30,
+            vel=self.clean_vel,
+            acc=self.clean_acc,
             ref=DR_BASE,
         )
 
-        # -----------------------------------------------------
-        # 9. 수직으로 위로 빼기
-        # -----------------------------------------------------
+        # =====================================================
+        # 8. LIFT OUT
+        # =====================================================
 
         self.node.get_logger().info(
-            "Lift brush out of toilet"
+            "Lift brush out"
         )
 
         movel(
             above,
-            vel=30,
-            acc=30,
+            vel=10,
+            acc=10,
             ref=DR_BASE,
         )
 
@@ -925,28 +1346,22 @@ class BrushClean:
 
         Pick brush
             ↓
-        Move above toilet
-            ↓
-        Insert vertically
-            ↓
-        Clean
-            ↓
-        Return center
-            ↓
-        Lift vertically
+        Clean toilet
             ↓
         Place brush
         """
 
-        self.node.get_logger().info("========== BRUSH CLEAN START ==========")
+        self.node.get_logger().info(
+            "========== BRUSH CLEAN START =========="
+        )
 
         try:
+
             # -------------------------------------------------
             # 1. Brush pickup
             # -------------------------------------------------
 
             self.pick_brush()
-
 
             # -------------------------------------------------
             # 2. Clean toilet
@@ -960,9 +1375,9 @@ class BrushClean:
 
             self.place_brush()
 
-            self.move_to_home()
-
-            self.node.get_logger().info("========== BRUSH CLEAN COMPLETE ==========")
+            self.node.get_logger().info(
+                "========== BRUSH CLEAN COMPLETE =========="
+            )
 
             return True
 
@@ -976,6 +1391,7 @@ class BrushClean:
             return False
 
         finally:
+
             # -------------------------------------------------
             # 에러가 나더라도 compliance 해제
             # -------------------------------------------------
@@ -983,6 +1399,7 @@ class BrushClean:
             if self.compliance_enabled:
 
                 try:
+
                     self.disable_compliance()
 
                 except Exception as e:
@@ -998,25 +1415,35 @@ class BrushClean:
 # =============================================================
 
 def main(args=None):
+
     import rclpy
 
     ROBOT_ID = "dsr01"
     ROBOT_MODEL = "m0609"
 
-    rclpy.init(args=args)
+    rclpy.init(
+        args=args
+    )
 
-    node = rclpy.create_node("brush_clean", namespace=ROBOT_ID)
+    node = rclpy.create_node(
+        "brush_clean",
+        namespace=ROBOT_ID
+    )
 
     DR_init.__dsr__id = ROBOT_ID
     DR_init.__dsr__model = ROBOT_MODEL
     DR_init.__dsr__node = node
 
     try:
-        cleaner = BrushClean(node)
+
+        cleaner = BrushClean(
+            node
+        )
 
         cleaner.run()
 
     finally:
+
         node.destroy_node()
         rclpy.shutdown()
 
