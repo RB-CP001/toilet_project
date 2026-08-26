@@ -465,8 +465,8 @@ class BrushClean:
 
         movej(
             pick_j,
-            vel=self.vel,
-            acc=self.acc,
+            vel=10.0,
+            acc=10.0,
         )
 
         wait(0.5)
