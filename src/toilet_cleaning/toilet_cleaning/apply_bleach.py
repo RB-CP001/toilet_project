@@ -3,173 +3,747 @@
 import rclpy
 import DR_init
 
+
 ROBOT_ID = "dsr01"
 ROBOT_MODEL = "m0609"
 
-DR_init.__dsr__id = ROBOT_ID
-DR_init.__dsr__model = ROBOT_MODEL
 
+# =============================================================
+# APPLY BLEACH
+# =============================================================
 
 class ApplyBleach:
+
     def __init__(self, node, vel=30, acc=30):
+
         self.node = node
         self.vel = vel
         self.acc = acc
-        # 좌표는 setup_robot()에서 posx/posj가 바인딩된 후 생성
 
-    def setup_robot(self, dsr, posx, posj):
-        # 로봇 제어 함수 바인딩
-        self.movej = dsr.movej
-        self.movel = dsr.movel
-        self.movec = dsr.movec
-        self.movesj = dsr.movesj
-        self.set_digital_output = dsr.set_digital_output
-        self.wait = dsr.wait
-        self.get_current_posx = dsr.get_current_posx
-        self.task_compliance_ctrl = dsr.task_compliance_ctrl
-        self.set_stiffnessx = dsr.set_stiffnessx
-        self.set_desired_force = dsr.set_desired_force
-        self.release_force = dsr.release_force
-        self.release_compliance_ctrl = dsr.release_compliance_ctrl
-        self.amove_periodic = dsr.amove_periodic
-        self.set_velj = dsr.set_velj
-        self.set_accj = dsr.set_accj
-        self.set_velx = dsr.set_velx
-        self.set_accx = dsr.set_accx
-        self.DR_BASE = dsr.DR_BASE
-        self.DR_FC_MOD_ABS = dsr.DR_FC_MOD_ABS
+        self.compliance_enabled = False
 
-        # posx/posj가 준비된 시점에 좌표 생성
-        self.bleach_grip1 = posj(32.0, -2.0, 88.0, -22.0, 55.0, -90.0)
-        self.bleach_grip2 = posj(26.85, 11.27, 93.88, -28.31, 37.86, -45.17)
-        self.bleach_grip_up = posj(28.32,-0.66, 91.07, -34.43, 38.63, -45.19)
-        # 변기 위에 세제 들고 있을 posj값
-        self.bleach_home = posj(0.0, -10.5, 50.0, 0.0, 90.0, -90.0)
-        # 변기 좌표 4개(세제 돌릴 위치)
-        self.bleach_start = posj(-1.35, 8.13, 64.05, -6.94, 124.30, -83.79)
-        self.bleach_via1 = posj(5.47, 19.90, 51.20, -8.61, 124.55, -83.72)
-        self.bleach_half = posj(3.18, 29.13, 38.96, -15.90, 126.98, -83.71)
-        self.bleach_via2 = posj(-0.25, 18.08, 54.38, -15.86, 123.52, -83.71)
-        # 우리 모두의 홈좌표
-        self.our_base = posj(0, 0, 50, 0, 90, 0)
-    # 전체 함수 동작 함수
-    def run(self):
-        self.node.get_logger().info("Applying bleach...")
-        self.gripper_open()
-        self.go_gripper_home()
-        self.grip_bleach()
-        self.go_gripper_home()
-        self.apply()
-        self.go_gripper_home()
-        self.release_bleach()
-        self.wait(1.0)
-        self.go_to_base()
-        
 
-    # 락스를 잡으러 감
-    def grip_bleach(self):
-        self.node.get_logger().info("Grip_bleach")
-        self.gripper_open()
-        self.movej(self.bleach_grip1, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
-        self.movej(self.bleach_grip2, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
-        self.gripper_close()
-        self.movej(self.bleach_grip_up, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
+    # =========================================================
+    # BLEACH GRIP POINTS
+    # =========================================================
 
-    # 락스를 돌려두기 위해 감
-    def release_bleach(self):
-        self.node.get_logger().info("Release_bleach")
-        self.movej(self.bleach_grip_up, vel=self.vel, acc=self.acc)
-        self.wait(1.5)
-        self.task_compliance_ctrl()
-        self.set_stiffnessx(
-            [3000, 3000, 3000, 200, 200, 200],
-            time=0.0
+    def get_bleach_grip_points(self):
+
+        from DR_common2 import posj
+
+        return {
+
+            # 락스 잡으러 가는 중간 위치
+            "grip1": posj(
+                32.0,
+                -2.0,
+                88.0,
+                -22.0,
+                55.0,
+                -90.0
+            ),
+
+            # 락스 잡는 위치
+            "grip2": posj(
+                26.85,
+                11.27,
+                93.88,
+                -28.31,
+                37.86,
+                -45.17
+            ),
+
+            # 락스를 들고 올라온 위치
+            "grip_up": posj(
+                28.32,
+                -0.66,
+                91.07,
+                -34.43,
+                38.63,
+                -45.19
+            ),
+        }
+
+
+    # =========================================================
+    # BLEACH HOME
+    # =========================================================
+
+    def get_bleach_home(self):
+
+        from DR_common2 import posj
+
+        return posj(
+            0.0,
+            -10.5,
+            50.0,
+            0.0,
+            90.0,
+            -90.0
         )
-        self.set_desired_force(
-            [0, 0, -50, 0, 0, 0],
-            [0, 0, 1, 0, 0, 0],
-            time=0.0,
-            mod=self.DR_FC_MOD_ABS
+
+
+    # =========================================================
+    # ROBOT BASE HOME
+    # =========================================================
+
+    def get_base_home(self):
+
+        from DR_common2 import posj
+
+        return posj(
+            0,
+            0,
+            50,
+            0,
+            90,
+            0
         )
-        self.wait(9.0)
-        self.release_force(time=0.0)
-        self.release_compliance_ctrl()
-        self.wait(1.0)
-        self.gripper_open()
 
-    # 그리퍼 오픈
-    def gripper_open(self):
-        self.node.get_logger().info("gripper_open")
-        self.set_digital_output(1, 0)
-        self.set_digital_output(2, 1)
-        self.wait(1.0)
 
-    # 그리퍼 닫기
-    def gripper_close(self):
-        self.node.get_logger().info("gripper_close")
-        self.set_digital_output(1, 1)
-        self.set_digital_output(2, 0)
-        self.wait(1.0)
+    # =========================================================
+    # BLEACH APPLY WAYPOINTS
+    # =========================================================
 
-    # 세제 홈 위치 (실제 홈 위치와 그리퍼 각도 다름)
-    def go_gripper_home(self):
-        self.node.get_logger().info("go_bleach_home")
-        self.movej(self.bleach_home, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
+    def get_bleach_waypoints(self):
 
-    # 도포하는 시작 위치로 이동
-    def move_to_start(self):
-        self.node.get_logger().info("move_to_start")
-        self.movej(self.bleach_start, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
+        from DR_common2 import posj
 
-    # 세제를 실제로 도포
-    def apply(self):
-        self.node.get_logger().info("apply")
-        self.move_to_start()
-        self.wait(1.0)
-        current = self.get_current_posx()
+        return [
 
-        bleach_waypoint = [
-            self.bleach_start,
-            self.bleach_via1,
-            self.bleach_half,
-            self.bleach_via2,
-            self.bleach_start
+            # 시작 위치
+            posj(
+                -1.35,
+                8.13,
+                64.05,
+                -6.94,
+                124.30,
+                -83.79
+            ),
+
+            # via 1
+            posj(
+                5.47,
+                19.90,
+                51.20,
+                -8.61,
+                124.55,
+                -83.72
+            ),
+
+            # 반대쪽
+            posj(
+                3.18,
+                29.13,
+                38.96,
+                -15.90,
+                126.98,
+                -83.71
+            ),
+
+            # via 2
+            posj(
+                -0.25,
+                18.08,
+                54.38,
+                -15.86,
+                123.52,
+                -83.71
+            ),
         ]
 
-        self.movesj(bleach_waypoint, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
-        
-        return True
+
+    # =========================================================
+    # GRIPPER OPEN
+    # =========================================================
+
+    def gripper_open(self):
+
+        from DSR_ROBOT2 import (
+            set_digital_output,
+            wait,
+        )
+
+        self.node.get_logger().info(
+            "Gripper OPEN"
+        )
+
+        set_digital_output(1, 0)
+        set_digital_output(2, 1)
+
+        wait(1.0)
+
+
+    # =========================================================
+    # GRIPPER CLOSE
+    # =========================================================
+
+    def gripper_close(self):
+
+        from DSR_ROBOT2 import (
+            set_digital_output,
+            wait,
+        )
+
+        self.node.get_logger().info(
+            "Gripper CLOSE"
+        )
+
+        set_digital_output(1, 1)
+        set_digital_output(2, 0)
+
+        wait(1.0)
+
+
+    # =========================================================
+    # GO TO BLEACH HOME
+    # =========================================================
+
+    def go_bleach_home(self):
+
+        from DSR_ROBOT2 import (
+            movej,
+            wait,
+        )
+
+        self.node.get_logger().info(
+            "Move to bleach HOME"
+        )
+
+        movej(
+            self.get_bleach_home(),
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+
+    # =========================================================
+    # GO TO BASE HOME
+    # =========================================================
 
     def go_to_base(self):
-        self.node.get_logger().info("go_to_base")
-        self.movej(self.bleach_grip_up, vel=self.vel, acc=self.acc)
-        self.wait(1.0)
-        self.movej(self.our_base, vel=self.vel, acc=self.acc)
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = rclpy.create_node("apply_bleach", namespace=ROBOT_ID)
+        from DSR_ROBOT2 import (
+            movej,
+            wait,
+        )
+
+        grip_points = self.get_bleach_grip_points()
+
+        self.node.get_logger().info(
+            "Move to BASE HOME"
+        )
+
+        # 먼저 락스 보관 위치에서 안전하게 위로
+        movej(
+            grip_points["grip_up"],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+        # 공통 HOME
+        movej(
+            self.get_base_home(),
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+
+    # =========================================================
+    # GRIP BLEACH
+    # =========================================================
+
+    def grip_bleach(self):
+
+        from DSR_ROBOT2 import (
+            movej,
+            wait,
+        )
+
+        grip_points = self.get_bleach_grip_points()
+
+        self.node.get_logger().info(
+            "========== GRIP BLEACH =========="
+        )
+
+        # =====================================================
+        # 1. Gripper open
+        # =====================================================
+
+        self.gripper_open()
+
+        # =====================================================
+        # 2. Approach bleach
+        # =====================================================
+
+        self.node.get_logger().info(
+            "Move to bleach approach"
+        )
+
+        movej(
+            grip_points["grip1"],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+        # =====================================================
+        # 3. Move to bleach grip position
+        # =====================================================
+
+        self.node.get_logger().info(
+            "Move to bleach grip position"
+        )
+
+        movej(
+            grip_points["grip2"],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+        # =====================================================
+        # 4. Grip bleach
+        # =====================================================
+
+        self.gripper_close()
+
+        # =====================================================
+        # 5. Lift bleach
+        # =====================================================
+
+        self.node.get_logger().info(
+            "Lift bleach"
+        )
+
+        movej(
+            grip_points["grip_up"],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+
+    # =========================================================
+    # MOVE TO APPLY START
+    # =========================================================
+
+    def move_to_start(self):
+
+        from DSR_ROBOT2 import (
+            movej,
+            wait,
+        )
+
+        waypoints = self.get_bleach_waypoints()
+
+        self.node.get_logger().info(
+            "Move to bleach apply start"
+        )
+
+        movej(
+            waypoints[0],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+
+    # =========================================================
+    # APPLY BLEACH
+    # =========================================================
+
+    def apply(self):
+
+        from DSR_ROBOT2 import (
+            movesj,
+            wait,
+        )
+
+        waypoints = self.get_bleach_waypoints()
+
+        self.node.get_logger().info(
+            "========== APPLY BLEACH =========="
+        )
+
+        # =====================================================
+        # 1. Move to start
+        # =====================================================
+
+        self.move_to_start()
+
+        wait(1.0)
+
+        # =====================================================
+        # 2. Create full bleach path
+        # =====================================================
+
+        bleach_path = [
+            waypoints[0],
+            waypoints[1],
+            waypoints[2],
+            waypoints[3],
+            waypoints[0],
+        ]
+
+        # =====================================================
+        # 3. Follow path
+        # =====================================================
+
+        self.node.get_logger().info(
+            "Start bleach circular motion"
+        )
+
+        movesj(
+            bleach_path,
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.0)
+
+
+    # =========================================================
+    # ENABLE COMPLIANCE
+    # =========================================================
+
+    def enable_compliance(self):
+
+        from DSR_ROBOT2 import (
+            task_compliance_ctrl,
+            set_stiffnessx,
+        )
+
+        self.node.get_logger().info(
+            "Compliance ON"
+        )
+
+        task_compliance_ctrl()
+
+        set_stiffnessx(
+            [
+                3000,
+                3000,
+                3000,
+                200,
+                200,
+                200
+            ],
+            time=0.0
+        )
+
+        self.compliance_enabled = True
+
+
+    # =========================================================
+    # DISABLE COMPLIANCE
+    # =========================================================
+
+    def disable_compliance(self):
+
+        from DSR_ROBOT2 import (
+            release_compliance_ctrl,
+        )
+
+        if not self.compliance_enabled:
+            return
+
+        self.node.get_logger().info(
+            "Compliance OFF"
+        )
+
+        release_compliance_ctrl()
+
+        self.compliance_enabled = False
+
+
+    # =========================================================
+    # RELEASE BLEACH
+    # =========================================================
+
+    def release_bleach(self):
+
+        from DSR_ROBOT2 import (
+            movej,
+            wait,
+            set_desired_force,
+            release_force,
+            DR_FC_MOD_ABS,
+        )
+
+        grip_points = self.get_bleach_grip_points()
+
+        self.node.get_logger().info(
+            "========== RELEASE BLEACH =========="
+        )
+
+        # =====================================================
+        # 1. Move to bleach return position
+        # =====================================================
+
+        movej(
+            grip_points["grip_up"],
+            vel=self.vel,
+            acc=self.acc
+        )
+
+        wait(1.5)
+
+        # =====================================================
+        # 2. Compliance ON
+        # =====================================================
+
+        self.enable_compliance()
+
+        try:
+
+            # =================================================
+            # 3. Downward force
+            # =================================================
+
+            self.node.get_logger().info(
+                "Apply downward force"
+            )
+
+            set_desired_force(
+                [
+                    0,
+                    0,
+                    -50,
+                    0,
+                    0,
+                    0
+                ],
+                [
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0
+                ],
+                time=0.0,
+                mod=DR_FC_MOD_ABS
+            )
+
+            # 기존 동작 그대로 9초
+            wait(9.0)
+
+            # =================================================
+            # 4. Release force
+            # =================================================
+
+            self.node.get_logger().info(
+                "Release force"
+            )
+
+            release_force(
+                time=0.0
+            )
+
+            wait(1.0)
+
+        finally:
+
+            # =================================================
+            # 반드시 Compliance OFF
+            # =================================================
+
+            if self.compliance_enabled:
+
+                try:
+
+                    self.disable_compliance()
+
+                except Exception as e:
+
+                    self.node.get_logger().error(
+                        "Failed to release compliance: "
+                        f"{e}"
+                    )
+
+        # =====================================================
+        # 5. Release bleach
+        # =====================================================
+
+        self.gripper_open()
+
+        self.node.get_logger().info(
+            "Bleach released"
+        )
+
+
+    # =========================================================
+    # RUN
+    # =========================================================
+
+    def run(self):
+
+        self.node.get_logger().info(
+            "========== APPLY BLEACH START =========="
+        )
+
+        try:
+
+            # =================================================
+            # 1. Gripper open
+            # =================================================
+
+            self.gripper_open()
+
+            # =================================================
+            # 2. Move to bleach HOME
+            # =================================================
+
+            self.go_bleach_home()
+
+            # =================================================
+            # 3. Pick bleach
+            # =================================================
+
+            self.grip_bleach()
+
+            # =================================================
+            # 4. Return to bleach HOME
+            # =================================================
+
+            self.go_bleach_home()
+
+            # =================================================
+            # 5. Apply bleach
+            # =================================================
+
+            self.apply()
+
+            # =================================================
+            # 6. Return to bleach HOME
+            # =================================================
+
+            self.go_bleach_home()
+
+            # =================================================
+            # 7. Return bleach
+            # =================================================
+
+            self.release_bleach()
+
+            # =================================================
+            # 8. Return BASE HOME
+            # =================================================
+
+            self.go_to_base()
+
+            self.node.get_logger().info(
+                "========== APPLY BLEACH COMPLETE =========="
+            )
+
+            return True
+
+        except Exception as e:
+
+            self.node.get_logger().error(
+                f"Apply bleach failed: "
+                f"{type(e).__name__}: {e}"
+            )
+
+            return False
+
+        finally:
+
+            # =================================================
+            # Error 발생해도 compliance 해제
+            # =================================================
+
+            if self.compliance_enabled:
+
+                try:
+
+                    self.disable_compliance()
+
+                except Exception as e:
+
+                    self.node.get_logger().error(
+                        "Failed to release compliance: "
+                        f"{e}"
+                    )
+
+
+# =============================================================
+# DOOSAN SETUP
+# =============================================================
+
+def setup_doosan(node):
+
+    DR_init.__dsr__id = ROBOT_ID
+    DR_init.__dsr__model = ROBOT_MODEL
     DR_init.__dsr__node = node
 
+
+# =============================================================
+# STANDALONE TEST
+# =============================================================
+
+def main(args=None):
+
+    rclpy.init(
+        args=args
+    )
+
+    node = rclpy.create_node(
+        "apply_bleach",
+        namespace=ROBOT_ID
+    )
+
+    # =========================================================
+    # Doosan 초기화
+    # =========================================================
+
+    setup_doosan(node)
+
+    # 반드시 DR_init 설정 이후
+    import DSR_ROBOT2
+
     try:
-        import DSR_ROBOT2 as dsr
-        from DR_common2 import posx, posj
-        bleach = ApplyBleach(node)
-        bleach.setup_robot(dsr, posx, posj)
-        bleach.run()
-    except Exception:
-        node.get_logger().error("Robot Error", exc_info=True)
+
+        node.get_logger().info(
+            "========== APPLY BLEACH STANDALONE START =========="
+        )
+
+        bleach = ApplyBleach(
+            node
+        )
+
+        success = bleach.run()
+
+        node.get_logger().info(
+            f"Apply bleach result = {success}"
+        )
+
+    except Exception as e:
+
+        node.get_logger().error(
+            f"Robot Error: "
+            f"{type(e).__name__}: {e}"
+        )
+
     finally:
+
         node.destroy_node()
+
         if rclpy.ok():
             rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     main()
