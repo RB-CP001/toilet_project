@@ -104,6 +104,8 @@ class CleaningManager(Node):
         from .open_lid import OpenLid
         from .apply_bleach import ApplyBleach
         from .brush_clean import BrushClean
+        from .rinse import Rinse
+
 
         # 나중에 활성화
         #
@@ -126,6 +128,7 @@ class CleaningManager(Node):
         self.open_lid = OpenLid(self)
         self.apply_bleach = ApplyBleach(self)
         self.brush_clean = BrushClean(self)
+        self.rinse = Rinse(self)
 
         # 나중에 활성화
         #
@@ -222,18 +225,29 @@ class CleaningManager(Node):
                     success = self.brush_clean.run()
 
                     if success:
-
                         self.set_state(
-                            CleaningState.DONE
+                            CleaningState.RINSE
                         )
-
                     else:
-
                         self.set_state(
                             CleaningState.ERROR
                         )
+                # =============================================
+                # RINSE
+                # =============================================
 
+                elif self.state == CleaningState.RINSE:
 
+                    success = self.rinse.run()
+
+                    if success:
+                        self.set_state(
+                            CleaningState.FINISH
+                        )
+                    else:
+                        self.set_state(
+                            CleaningState.ERROR
+                        )
                 # =============================================
                 # DONE
                 # =============================================
