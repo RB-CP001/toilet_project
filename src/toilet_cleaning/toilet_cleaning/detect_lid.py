@@ -191,6 +191,8 @@ def main(args=None):
         node.get_logger().info('클래스 저장')
         detect_lid.run()
         node.get_logger().info('detect_lid_run 완료')
+    except Exception:
+        node.get_logger().error("Robot Error", exc_info=True)
     finally:
         node.destroy_node()
         rclpy.shutdown()

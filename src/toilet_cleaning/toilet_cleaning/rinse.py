@@ -1,7 +1,7 @@
 """Rinse: rinses the toilet bowl with water."""
 
 
-"""Apply Bleach: applies bleach to the toilet bowl."""
+
 
 import rclpy
 import DR_init
@@ -47,9 +47,9 @@ class ApplyBleach:
         self.bleach_grip2 = posj(4.18,10.22,94.84,35.89,81.23,-1.18)# 샤워기 잡는 위치
         self.bleach_grip_up = posj(5.54,1.50,80.15,34.02,91.07,16.72)# 샤워기 들어올릴 위치
         self.bleach_grup_dn= posj(6.95,1.99,85.36,32.91,86.04,13.82) # 샤워기 제자리 안전위치
-        # 변기 위에 세제 들고 있을 posj값
+        # 변기 위에 샤워기 들고 있을 posj값
         self.bleach_home = posj(0.0, -10.5, 50.0, 0.0, 90.0, -90.0)
-        # 변기 좌표 4개(세제 돌릴 위치)
+        # 변기 좌표 4개(샤워기 돌릴 위치)
         self.bleach_start = posj(-0.01, -36.50, 78.55, -5.84, 82.43 , -90.01)
         self.bleach_via1 = posj(35.46, 7.06, 34.84, -28.72, 108.65, -83.72)
         self.bleach_half = posj(3.82, 20.41, 15.44, -16.64, 101.7, -83.72)
