@@ -85,6 +85,7 @@ class DetectLid:
             self.node.get_logger().info(f"fcon1:{fcon1}")
 
             self.node.get_logger().info("insert_with_force if 실행됨")
+            return True
         else:
             wait(3.0)
             release_force(time=0.0)
@@ -92,9 +93,10 @@ class DetectLid:
             self.node.get_logger().info(f"fcon1:{fcon1}")
             self.node.get_logger().info("insert_with_force else실행")
             self.go_home()
+            return False
                 
-            #변기 뚜껑이 있는지 없는지 반환
-        return True
+            
+        
 
 
             
