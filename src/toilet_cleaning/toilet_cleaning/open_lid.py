@@ -13,37 +13,14 @@ DR_init.__dsr__model = ROBOT_MODEL
 
 class OpenLid:
     def __init__(self,node):
-        from DR_common2 import posx, posj
+        from DR_common2 import posj
         self.node=node
         self.lid_point=[posj(-10.13,-2.14,75.49,-2.76,106.43,-92.76),# 변기 손잡이 위,
                         posj(-9.01,-2.77,90.70,-3.94,93.12,-92.78), #변기 손잡이 위치
                         posj(-6.70,2.64,70.35,-0.63,26.74,-94.18)   #변기 탈출 
                     ]  
     def run(self):
-        from DSR_ROBOT2 import (
-                    set_tool,
-                    set_tcp,
-                    movej,
-                    movel,
-                    movesj,
-                    movec,
-                    set_digital_output,
-                    wait,
-                    get_current_posx,
-                    trans,
-                    task_compliance_ctrl,
-                    set_stiffnessx,
-                    set_desired_force,
-                    release_force,
-                    release_compliance_ctrl,
-                    amove_periodic,
-                    set_singularity_handling,
-                    check_force_condition,
-                    DR_BASE,
-                    DR_AVOID,
-                    DR_FC_MOD_ABS,
-                    DR_AXIS_Z,
-                )
+        from DSR_ROBOT2 import wait
         from DR_common2 import posx, posj
         
         self.node.get_logger().info('run 함수 시작')
@@ -85,8 +62,8 @@ class OpenLid:
         movej(self.lid_point[1], vel=30, acc=30)
         wait(1.0)
     def open_lid_define(self):
-        from DSR_ROBOT2 import movec, movej,task_compliance_ctrl, release_compliance_ctrl,wait,DR_BASE
-        from DR_common2 import posx,posj
+        from DSR_ROBOT2 import movej,task_compliance_ctrl, release_compliance_ctrl,wait
+        from DR_common2 import posj
         self.node.get_logger().info("open_lid_define 시작")
         open_lid_pos = [posj(-9.03,4.32,77.37,-4.21,106.58,-92.78),#1번 열린 위치
                         posj(-10.22,9.07,66.39,-3.23,115.31,-92.84),#2번 열린위치
