@@ -55,8 +55,7 @@ class DetectLid:
             ref=DR_BASE
         )
         movel(move_point, vel=50, acc=20)
-        # def move2lid(posx):
-        #     movej(posx, vel=30, acc=30)
+        
     def insert_with_force(self,periodic=False):
         from DSR_ROBOT2 import movej, wait, task_compliance_ctrl, set_stiffnessx, set_desired_force, release_force, release_compliance_ctrl, check_force_condition, DR_AXIS_Z, DR_FC_MOD_ABS, DR_BASE
         self.node.get_logger().info("insert_with_force 실행")
@@ -74,26 +73,26 @@ class DetectLid:
             mod=DR_FC_MOD_ABS
         )
         wait(5.5)
-        fcon1 = check_force_condition(DR_AXIS_Z, max=20,ref=DR_BASE) 
-        self.node.get_logger().info(f"fcon1:{fcon1}")
-            #확인 후 변기뚜껑 위 위치로 이동
+        self.fcon1 = check_force_condition(DR_AXIS_Z, max=20,ref=DR_BASE) 
+        self.node.get_logger().info(f"fcon1:{self.fcon1}")
+        #변기 뚜껑 유무 확인
         movej(self.movejpoint[0], vel=30, acc=30)
-        if fcon1 == -1:
+        if self.fcon1 == -1:
             wait(1.0)
             release_force(time=0.0)
             release_compliance_ctrl()
-            self.node.get_logger().info(f"fcon1:{fcon1}")
+            self.node.get_logger().info(f"fcon1:{self.fcon1}")
 
             self.node.get_logger().info("insert_with_force if 실행됨")
-            return True
+            return self.fcon1
         else:
             wait(3.0)
             release_force(time=0.0)
             release_compliance_ctrl()
-            self.node.get_logger().info(f"fcon1:{fcon1}")
+            self.node.get_logger().info(f"fcon1:{self.fcon1}")
             self.node.get_logger().info("insert_with_force else실행")
             self.go_home()
-            return False
+            return self.fcon1
                 
             
         
@@ -152,35 +151,13 @@ class DetectLid:
         movej(self.movejpoint[0], vel=30, acc=30)
         self.insert_with_force()
         self.go_home()
-        # def openlid(self, islid):
-        #     from DSR_ROBOT2 import movej, movec, task_compliance_ctrl, release_compliance_ctrl, wait, DR_BASE,node
-        #     if(islid==-1):
-        #         #뚜껑을 열어라
-        #         node.get_logger().info("openlid 실행됨")
-        #         self.gripper_open()
-        #         movej(self.movejpoint[1], vel=30, acc=30)
-        #         movej(self.movejpoint[2], vel=30, acc=30)
-        #         self.gripper_close()
-        #         task_compliance_ctrl(stx=[3000, 3000, 3000, 200, 200, 200], time=0.0)
-        #         movec(self.open_lid_pos[0], self.open_lid_pos[1], vel=30, acc=30, ref=DR_BASE)
-        #         release_compliance_ctrl()
-        # try:
-        #     print("detect_lid_start")
-        #     self.gripper_open()
-        #     self.go_home()
-        #     self.gripper_close()
-            
-        #     movej(self.movejpoint[0], vel=30, acc=30)
-        #     islid = self.insert_with_force()
-        #     wait(1.0)
-        #     node.get_logger().info(f"뚜껑 : {islid}")
-        
-        #     self.openlid(islid)
-        #     node.get_logger().info("openlid")
+        if self.fcon1 == -1:
+            return True
+        else:
+            return False
 
-        # finally:
-        #     node.destroy_node()
-        #     rclpy.shutdown()
+
+        
 
 def main(args=None):
     rclpy.init(args=args)
