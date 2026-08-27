@@ -95,6 +95,7 @@ class RobotGUI(QtWidgets.QMainWindow):
     # thread allowed to touch widgets.
     status_received = pyqtSignal(object)
     log_received = pyqtSignal(str)
+    safety_received = pyqtSignal(str)
 
     def __init__(self, ros2_node):
 
@@ -123,9 +124,12 @@ class RobotGUI(QtWidgets.QMainWindow):
 
         self.log_received.connect(self.write_log)
 
+        self.safety_received.connect(self.on_safety_stop)
+
         self.node.set_callbacks(
             on_status=self.status_received.emit,
             on_log=self.log_received.emit,
+            on_safety=self.safety_received.emit,
         )
 
         # =====================================================
@@ -141,9 +145,13 @@ class RobotGUI(QtWidgets.QMainWindow):
         # cleaning_manager are only trusted then.
         self.full_run = False
 
-        # Set when the user killed the run, so the watchdog reports a stop
-        # instead of a crash.
+        # Set when the run was killed on purpose, so the watchdog reports a
+        # stop instead of a crash.
         self.aborted = False
+
+        # Set only when the controller reported a safety event, so the stop
+        # is not logged as a user emergency stop.
+        self.safety_stopped = False
 
         # =====================================================
         # Control buttons
@@ -200,9 +208,11 @@ class RobotGUI(QtWidgets.QMainWindow):
 
             return
 
-        self.aborted = False
-
         executable, label = FULL_RUN
+
+        if not self.arm_for_run(label):
+
+            return
 
         self.write_log(f"========== {label} 시작 ==========")
 
@@ -240,7 +250,9 @@ class RobotGUI(QtWidgets.QMainWindow):
 
             return
 
-        self.aborted = False
+        if not self.arm_for_run(label):
+
+            return
 
         # Steps are self-contained but not order-checked. Running a bowl
         # step with the lid down would drive the tool into the lid.
@@ -270,6 +282,46 @@ class RobotGUI(QtWidgets.QMainWindow):
         self.label_message.setText(f"{label} 단독 실행 중입니다.")
 
         self.update_button_state()
+
+    # =========================================================
+    # Run Arming
+    #
+    # A safety stop is not cleared by starting again. Something
+    # hit the arm, so the operator has to look before the robot
+    # is allowed to move.
+    # =========================================================
+
+    def arm_for_run(self, label):
+
+        if self.node.is_safety_latched():
+
+            answer = QtWidgets.QMessageBox.warning(
+                self,
+                "안전정지 해제 확인",
+                "직전 작업이 안전정지로 중단되었습니다.\n\n"
+                "로봇 주변에 사람이나 장애물이 없는지 확인하셨습니까?\n"
+                "확인 후에만 실행하십시오.",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.No,
+            )
+
+            if answer != QtWidgets.QMessageBox.Yes:
+
+                self.write_log(f"{label} 실행 취소됨 (안전정지 미해제)")
+
+                return False
+
+            self.write_log("안전정지 해제됨 (작업자 확인)")
+
+        # If the controller is still in a latched unsafe state, the state
+        # poll trips again right away and the run is stopped once more.
+        self.node.reset_safety_latch()
+
+        self.aborted = False
+
+        self.safety_stopped = False
+
+        return True
 
     # =========================================================
     # Lid Confirmation
@@ -303,6 +355,48 @@ class RobotGUI(QtWidgets.QMainWindow):
 
         self.write_log("========== EMERGENCY STOP ==========")
 
+        self.halt(
+            state_name="E-STOP",
+            running_text="긴급정지",
+            flavor="의식이 강제로 중단되었다!",
+            message="긴급정지 되었습니다.",
+        )
+
+    # =========================================================
+    # Safety Stop (Qt thread)
+    #
+    # The node already commanded move_stop before emitting, so
+    # the arm is stopping by the time this runs. What is left is
+    # killing the commanding process and telling the operator.
+    # =========================================================
+
+    def on_safety_stop(self, reason):
+
+        self.safety_stopped = True
+
+        self.write_log("========== 안전정지 감지 ==========")
+
+        self.write_log(f"원인: {reason}")
+
+        self.write_log("로봇 동작을 중단합니다.")
+
+        self.halt(
+            state_name="SAFETY STOP",
+            running_text="안전정지",
+            flavor="누군가 성역에 발을 들였다. 의식을 멈춘다.",
+            message=f"안전정지: {reason}",
+        )
+
+    # =========================================================
+    # Halt
+    #
+    # Shared by the operator's emergency stop and an automatic
+    # safety stop. move_stop is idempotent, so calling it again
+    # after the node already did is harmless.
+    # =========================================================
+
+    def halt(self, state_name, running_text, flavor, message):
+
         # Halt the arm first, then kill whatever is commanding it.
         self.node.request_move_stop()
 
@@ -315,13 +409,13 @@ class RobotGUI(QtWidgets.QMainWindow):
         self.progress_bar.setRange(0, 100)
 
         self.set_state_display(
-            "E-STOP",
+            state_name,
             "#e74c3c",
-            "긴급정지",
-            "의식이 강제로 중단되었다!"
+            running_text,
+            flavor
         )
 
-        self.label_message.setText("긴급정지 되었습니다.")
+        self.label_message.setText(message)
 
         self.update_button_state()
 
@@ -347,8 +441,13 @@ class RobotGUI(QtWidgets.QMainWindow):
 
         label = self.proc.label or "프로세스"
 
-        # A kill the user asked for is not a crash.
-        if self.aborted:
+        # A kill that was asked for is not a crash. The safety case is
+        # checked first, otherwise it reads as an operator stop.
+        if self.safety_stopped:
+
+            self.write_log(f"{label} 안전정지로 중단됨")
+
+        elif self.aborted:
 
             self.write_log(f"{label} 긴급정지로 중단됨")
 
