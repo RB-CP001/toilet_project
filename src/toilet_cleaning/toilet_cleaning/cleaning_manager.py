@@ -9,6 +9,10 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 import DR_init
 from toilet_cleaning_interfaces.msg import CleaningStatus
 
+from .robot_safety import (
+    RobotSafety,
+    RobotConfigurationError,
+)
 
 ROBOT_ID = "dsr01"
 ROBOT_MODEL = "m0609"
@@ -164,6 +168,14 @@ class CleaningManager(Node):
 
         self.publish_status("Ready")
 
+        # =====================================================
+        # 6. Robot safety
+        # =====================================================
+
+        self.robot_safety = RobotSafety(
+            self
+        )
+
     # =========================================================
     # SET STATE
     # =========================================================
@@ -196,6 +208,31 @@ class CleaningManager(Node):
 
 
     # =========================================================
+    # CHECK ROBOT TOOL/TCP
+    # =========================================================
+
+    def check_robot_configuration(self):
+
+        try:
+
+            tool, tcp = self.robot_safety.validate_configuration(
+                expected_tool="Tool_Weight_1_456_te",
+                expected_tcp="GripperDA_v1",
+                timeout_sec=2.0,
+            )
+
+            return True
+
+        except RobotConfigurationError as e:
+
+            self.get_logger().error(
+                f"Robot configuration error: {e}"
+            )
+
+            return False
+
+    
+    # =========================================================
     # RUN
     # =========================================================
 
@@ -220,7 +257,12 @@ class CleaningManager(Node):
                 # =============================================
                 # DETECT LID
                 # =============================================
+
                 if self.state == CleaningState.DETECT_LID:
+
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     lid_detected = self.detect_lid.run()
 
@@ -229,10 +271,15 @@ class CleaningManager(Node):
                     else:
                         self.set_state(CleaningState.APPLY_BLEACH)
 
+
                 # =============================================
                 # OPEN LIDD
                 # =============================================
+
                 elif self.state == CleaningState.OPEN_LID:
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     success = self.open_lid.run()
 
@@ -246,7 +293,11 @@ class CleaningManager(Node):
                 # =============================================
                 # APPLY BLEACH
                 # =============================================
+
                 elif self.state == CleaningState.APPLY_BLEACH:
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     success = self.apply_bleach.run()
 
@@ -260,11 +311,16 @@ class CleaningManager(Node):
                             CleaningState.ERROR
                         )
 
+
                 # =============================================
                 # BRUSH CLEAN
                 # =============================================
 
                 elif self.state == CleaningState.BRUSH_CLEAN:
+
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     success = self.brush_clean.run()
 
@@ -276,12 +332,16 @@ class CleaningManager(Node):
                         self.set_state(
                             CleaningState.ERROR
                         )
+
                         
                 # =============================================
                 # RINSE
                 # =============================================
 
                 elif self.state == CleaningState.RINSE:
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     success = self.rinse.run()
 
@@ -294,10 +354,15 @@ class CleaningManager(Node):
                             CleaningState.ERROR
                         )
 
+
                 # =============================================
                 # FINISH
                 # =============================================
+
                 elif self.state == CleaningState.RINSE:
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     success = self.rinse.run()
 
@@ -310,10 +375,15 @@ class CleaningManager(Node):
                             CleaningState.ERROR
                         )
 
+
                 # =============================================
                 # FINISH
                 # =============================================
+
                 elif self.state == CleaningState.FINISH:
+                    if not self.check_robot_configuration():
+                        self.set_state(CleaningState.ERROR)
+                        continue
 
                     success = self.finish.run()
 
@@ -325,6 +395,7 @@ class CleaningManager(Node):
                         self.set_state(
                             CleaningState.ERROR
                         )
+
                 # =============================================
                 # DONE
                 # =============================================
