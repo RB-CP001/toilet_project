@@ -166,6 +166,7 @@ class ApplyBleach:
         self.node.get_logger().info(
             "Gripper OPEN"
         )
+        wait(0.5)
 
         set_digital_output(1, 0)
         set_digital_output(2, 1)
@@ -594,17 +595,18 @@ class ApplyBleach:
 
         try:
 
-            # =================================================
-            # 1. Gripper open
-            # =================================================
-
-            self.gripper_open()
 
             # =================================================
-            # 2. Move to bleach HOME
+            # 1. Move to bleach HOME
             # =================================================
 
             self.go_bleach_home()
+            
+            # =================================================
+            # 2. Gripper open
+            # =================================================
+
+            self.gripper_open()
 
             # =================================================
             # 3. Pick bleach

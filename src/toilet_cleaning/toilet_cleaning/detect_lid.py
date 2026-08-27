@@ -1,6 +1,5 @@
 """Detect Lid: detects whether the toilet lid is present."""
 
-import rclpy
 import DR_init
 
 
@@ -361,24 +360,26 @@ class DetectLid:
     # =========================================================
 
     def run(self):
-
+    
         self.node.get_logger().info(
             "========== DETECT LID START =========="
         )
 
         try:
 
-            # =================================================
-            # 1. Gripper open
-            # =================================================
 
-            self.gripper_open()
 
             # =================================================
-            # 2. HOME
+            # 1. HOME
             # =================================================
 
             self.go_home()
+            
+            # =================================================
+            # 2. Gripper open
+            # =================================================
+
+            self.gripper_open()
 
             # =================================================
             # 3. Gripper close
@@ -435,21 +436,12 @@ class DetectLid:
 
 
 # =============================================================
-# DOOSAN SETUP
-# =============================================================
-
-def setup_doosan(node):
-
-    DR_init.__dsr__id = ROBOT_ID
-    DR_init.__dsr__model = ROBOT_MODEL
-    DR_init.__dsr__node = node
-
-
-# =============================================================
 # STANDALONE TEST
 # =============================================================
 
 def main(args=None):
+    
+    import rclpy
 
     rclpy.init(
         args=args
@@ -464,7 +456,9 @@ def main(args=None):
     # Doosan 초기화
     # =========================================================
 
-    setup_doosan(node)
+    DR_init.__dsr__id = ROBOT_ID
+    DR_init.__dsr__model = ROBOT_MODEL
+    DR_init.__dsr__node = node
 
     # 반드시 DR_init 설정 이후
     import DSR_ROBOT2

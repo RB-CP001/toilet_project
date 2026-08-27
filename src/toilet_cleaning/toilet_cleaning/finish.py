@@ -1,6 +1,5 @@
 """Finish: finalizes the cleaning sequence and reports completion."""
 
-import rclpy
 import DR_init
 
 
@@ -476,23 +475,13 @@ class Finish:
                         f"{e}"
                     )
 
-
-# =============================================================
-# DOOSAN SETUP
-# =============================================================
-
-def setup_doosan(node):
-
-    DR_init.__dsr__id = ROBOT_ID
-    DR_init.__dsr__model = ROBOT_MODEL
-    DR_init.__dsr__node = node
-
-
 # =============================================================
 # STANDALONE TEST
 # =============================================================
 
 def main(args=None):
+
+    import rclpy
 
     rclpy.init(
         args=args
@@ -507,7 +496,9 @@ def main(args=None):
     # Doosan initialization
     # =========================================================
 
-    setup_doosan(node)
+    DR_init.__dsr__id = ROBOT_ID
+    DR_init.__dsr__model = ROBOT_MODEL
+    DR_init.__dsr__node = node
 
     # 반드시 DR_init 설정 이후
     import DSR_ROBOT2

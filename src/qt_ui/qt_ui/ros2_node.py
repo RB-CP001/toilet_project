@@ -93,7 +93,11 @@ ROBOT_STATE_NAME = {
 # States that hold long enough for polling to catch them.
 UNSAFE_ROBOT_STATES = (3, 5, 6, 9, 10)
 
-ROBOT_STATE_POLL_SEC = 0.2
+# get_robot_state_cb reaches the robot controller over TCP on every call,
+# and it shares an executor with the motion and IO services. Polling it
+# hard starves them, so this only ticks while a run is active and it ticks
+# slowly. The alarm topic, not this timer, is what catches a collision.
+ROBOT_STATE_POLL_SEC = 2.0
 
 
 # =============================================================
@@ -164,9 +168,10 @@ class RobotNode(Node):
         # =====================================================
         # Robot state poll
         #
-        # Covers the states the alarm topic does not announce:
-        # emergency stop and servo off hold, so they are still
-        # reported if the HMI starts while one is already active.
+        # Backs up the alarm topic for the states that latch:
+        # emergency stop and servo off hold. Idle by default and
+        # armed only while a robot process runs, so the HMI adds
+        # no controller load when nothing is moving.
         # =====================================================
 
         self.robot_state_client = self.create_client(
@@ -174,10 +179,16 @@ class RobotNode(Node):
             ROBOT_STATE_SERVICE
         )
 
+        # One request at a time. If the controller is slow to answer,
+        # queueing more would make that worse.
+        self._state_request_pending = False
+
         self.robot_state_timer = self.create_timer(
             ROBOT_STATE_POLL_SEC,
             self.poll_robot_state
         )
+
+        self.robot_state_timer.cancel()
 
         self.get_logger().info(
             f"Toilet HMI node started, listening on {STATUS_TOPIC} "
@@ -257,6 +268,19 @@ class RobotNode(Node):
     # Robot State Poll (executor thread)
     # =========================================================
 
+    def set_run_active(self, active):
+        """Arm the state poll only while a robot process is running."""
+
+        if active:
+
+            self.robot_state_timer.reset()
+
+        else:
+
+            self.robot_state_timer.cancel()
+
+            self._state_request_pending = False
+
     def poll_robot_state(self):
 
         # Nothing to poll for once the run is already being stopped.
@@ -266,9 +290,15 @@ class RobotNode(Node):
 
                 return
 
+        if self._state_request_pending:
+
+            return
+
         if not self.robot_state_client.service_is_ready():
 
             return
+
+        self._state_request_pending = True
 
         future = self.robot_state_client.call_async(
             GetRobotState.Request()
@@ -279,6 +309,8 @@ class RobotNode(Node):
         )
 
     def robot_state_response_callback(self, future):
+
+        self._state_request_pending = False
 
         try:
 

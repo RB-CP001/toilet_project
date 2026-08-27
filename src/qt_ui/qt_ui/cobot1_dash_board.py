@@ -222,6 +222,8 @@ class RobotGUI(QtWidgets.QMainWindow):
 
         self.full_run = True
 
+        self.node.set_run_active(True)
+
         self.progress_bar.setRange(0, 100)
 
         self.progress_bar.setValue(0)
@@ -267,6 +269,8 @@ class RobotGUI(QtWidgets.QMainWindow):
             return
 
         self.full_run = False
+
+        self.node.set_run_active(True)
 
         # Step nodes publish no status, so there is no progress to show.
         # An indeterminate bar signals "running" without faking a number.
@@ -406,6 +410,8 @@ class RobotGUI(QtWidgets.QMainWindow):
 
         self.full_run = False
 
+        self.node.set_run_active(False)
+
         self.progress_bar.setRange(0, 100)
 
         self.set_state_display(
@@ -489,6 +495,8 @@ class RobotGUI(QtWidgets.QMainWindow):
             )
 
         self.full_run = False
+
+        self.node.set_run_active(False)
 
         self.progress_bar.setRange(0, 100)
 

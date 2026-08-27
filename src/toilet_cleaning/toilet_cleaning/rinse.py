@@ -1,6 +1,6 @@
 """Rinse: rinses the toilet bowl with water."""
 
-import rclpy
+
 import DR_init
 
 
@@ -177,6 +177,7 @@ class Rinse:
         self.node.get_logger().info(
             "Gripper OPEN"
         )
+        wait(0.5)
 
         set_digital_output(1, 0)
         set_digital_output(2, 1)
@@ -567,16 +568,16 @@ class Rinse:
         try:
 
             # =================================================
-            # 1. Gripper open
-            # =================================================
-
-            self.gripper_open()
-
-            # =================================================
-            # 2. Shower home
+            # 1. Shower home
             # =================================================
 
             self.go_shower_home()
+            
+            # =================================================
+            # 2. Gripper open
+            # =================================================
+
+            self.gripper_open()
 
             # =================================================
             # 3. Pick shower
@@ -648,23 +649,16 @@ class Rinse:
                         f"{e}"
                     )
 
-
-# =============================================================
-# DOOSAN SETUP
-# =============================================================
-
-def setup_doosan(node):
-
-    DR_init.__dsr__id = ROBOT_ID
-    DR_init.__dsr__model = ROBOT_MODEL
-    DR_init.__dsr__node = node
-
-
 # =============================================================
 # STANDALONE TEST
 # =============================================================
 
 def main(args=None):
+
+    import rclpy
+
+    ROBOT_ID = "dsr01"
+    ROBOT_MODEL = "m0609"
 
     rclpy.init(
         args=args
@@ -679,7 +673,9 @@ def main(args=None):
     # Doosan initialization
     # =========================================================
 
-    setup_doosan(node)
+    DR_init.__dsr__id = ROBOT_ID
+    DR_init.__dsr__model = ROBOT_MODEL
+    DR_init.__dsr__node = node
 
     # 반드시 DR_init 설정 이후
     import DSR_ROBOT2
