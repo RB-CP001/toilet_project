@@ -61,36 +61,6 @@ QPushButton:hover {
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btn_stop">
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>21</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string>
-QPushButton {
-    background-color: #f39c12;
-    color: white;
-    border-radius: 15px;
-}
-QPushButton:hover {
-    background-color: #e67e22;
-}
-         </string>
-        </property>
-        <property name="text">
-         <string>정지</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="btn_shutdown">
         <property name="minimumSize">
          <size>
@@ -153,6 +123,190 @@ QPushButton:hover {
      </layout>
     </item>
     <item>
+     <widget class="QGroupBox" name="group_steps">
+      <property name="font">
+       <font>
+        <pointsize>21</pointsize>
+       </font>
+      </property>
+      <property name="title">
+       <string>개별 공정 실행</string>
+      </property>
+      <layout class="QGridLayout" name="stepLayout">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="btn_open_lid">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string>
+QPushButton {
+    background-color: #16a085;
+    color: white;
+    border-radius: 12px;
+}
+QPushButton:hover {
+    background-color: #117a65;
+}
+QPushButton:disabled {
+    background-color: #b2bec3;
+    color: #dfe6e9;
+}
+         </string>
+         </property>
+         <property name="text">
+          <string>뚜껑 열기</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="btn_apply_bleach">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string>
+QPushButton {
+    background-color: #16a085;
+    color: white;
+    border-radius: 12px;
+}
+QPushButton:hover {
+    background-color: #117a65;
+}
+QPushButton:disabled {
+    background-color: #b2bec3;
+    color: #dfe6e9;
+}
+         </string>
+         </property>
+         <property name="text">
+          <string>세제 도포</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="btn_brush_clean">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string>
+QPushButton {
+    background-color: #16a085;
+    color: white;
+    border-radius: 12px;
+}
+QPushButton:hover {
+    background-color: #117a65;
+}
+QPushButton:disabled {
+    background-color: #b2bec3;
+    color: #dfe6e9;
+}
+         </string>
+         </property>
+         <property name="text">
+          <string>변기 솔질</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="btn_rinse">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string>
+QPushButton {
+    background-color: #16a085;
+    color: white;
+    border-radius: 12px;
+}
+QPushButton:hover {
+    background-color: #117a65;
+}
+QPushButton:disabled {
+    background-color: #b2bec3;
+    color: #dfe6e9;
+}
+         </string>
+         </property>
+         <property name="text">
+          <string>변기 세척</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="btn_finish">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string>
+QPushButton {
+    background-color: #16a085;
+    color: white;
+    border-radius: 12px;
+}
+QPushButton:hover {
+    background-color: #117a65;
+}
+QPushButton:disabled {
+    background-color: #b2bec3;
+    color: #dfe6e9;
+}
+         </string>
+         </property>
+         <property name="text">
+          <string>뚜껑 닫고 물내림</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
      <widget class="QGroupBox" name="group_status">
       <property name="font">
        <font>
@@ -190,6 +344,22 @@ QPushButton:hover {
            </property>
            <property name="text">
             <string>DISCONNECTED</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_flavor">
+           <property name="font">
+            <font>
+             <pointsize>15</pointsize>
+             <italic>true</italic>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string>color: #5d6d7e;</string>
+           </property>
+           <property name="text">
+            <string>성역은 고요하다...</string>
            </property>
           </widget>
          </item>

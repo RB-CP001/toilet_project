@@ -33,11 +33,14 @@ STOP_MODE_QUICK = 0
 
 class RobotNode(Node):
 
-    def __init__(self):
+    def __init__(self, on_status=None, on_log=None):
 
         super().__init__("toilet_hmi_node")
 
-        self.gui = None
+        # Callbacks are the GUI's queued signal emitters, so nothing here
+        # ever touches a widget from the executor thread.
+        self._on_status = on_status
+        self._on_log = on_log
 
         # =====================================================
         # Cleaning status subscription
@@ -72,27 +75,32 @@ class RobotNode(Node):
         )
 
     # =========================================================
-    # GUI
+    # Callbacks
+    #
+    # The GUI is built after this node, so it wires its queued
+    # signal emitters in here.
     # =========================================================
 
-    def set_gui(self, gui):
+    def set_callbacks(self, on_status=None, on_log=None):
 
-        self.gui = gui
+        if on_status is not None:
+            self._on_status = on_status
+
+        if on_log is not None:
+            self._on_log = on_log
 
     # =========================================================
     # Cleaning Status Callback
     #
-    # Runs on the executor thread. The GUI turns this into a
-    # queued Qt signal, so no widget is touched from here.
+    # Runs on the executor thread. _on_status is a queued Qt
+    # signal emitter, so no widget is touched from here.
     # =========================================================
 
     def status_callback(self, msg):
 
-        if self.gui is None:
+        if self._on_status is not None:
 
-            return
-
-        self.gui.on_cleaning_status(msg)
+            self._on_status(msg)
 
     # =========================================================
     # Emergency Stop
@@ -164,11 +172,9 @@ class RobotNode(Node):
             str(text)
         )
 
-        if self.gui is not None:
+        if self._on_log is not None:
 
-            self.gui.write_log(
-                str(text)
-            )
+            self._on_log(str(text))
 
     # =========================================================
     # Shutdown
