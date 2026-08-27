@@ -1,36 +1,52 @@
-"""Manager Process: runs the toilet_cleaning cleaning_manager node as a subprocess.
+"""Robot Process: runs one toilet_cleaning node as a subprocess.
 
-The cleaning_manager has no start trigger of its own; its main() starts the
-cleaning sequence as soon as the process comes up, and DSR_ROBOT2 spins the
-manager node internally. Running it in a separate process is therefore the only
-way to drive it from the HMI without touching the toilet_cleaning package.
+Every toilet_cleaning entry point follows the same shape - main() sets up
+DR_init, imports DSR_ROBOT2 and calls run() - so the full sequence
+(cleaning_manager) and each individual step are launched the same way.
+
+Only one robot process may run at a time. Two processes commanding the same
+arm would fight over it.
 """
 
 import os
 import shutil
 import signal
 import subprocess
+import threading
 
 
 PACKAGE = "toilet_cleaning"
-EXECUTABLE = "cleaning_manager"
 
 # Seconds to wait for a graceful SIGINT shutdown before escalating.
 SIGINT_GRACE = 5.0
 SIGTERM_GRACE = 3.0
 
+# The step nodes log failures and still exit 0, so their stderr is the only
+# way to tell a failed run from a successful one.
+ERROR_MARKERS = ("Robot Error", "[ERROR]", "Traceback")
+
 
 # =============================================================
-# MANAGER PROCESS
+# ROBOT PROCESS
 # =============================================================
 
-class ManagerProcess:
+class RobotProcess:
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, output=None):
 
         self.process = None
 
+        # Executable and human-readable label of the current run.
+        self.executable = None
+        self.label = None
+
+        # Set when the child printed something that looks like a failure.
+        self.saw_error = False
+
         self._log = log
+        self._output = output
+
+        self._reader = None
 
     # =========================================================
     # LOG
@@ -75,12 +91,12 @@ class ManagerProcess:
     # START
     # =========================================================
 
-    def start(self):
+    def start(self, executable, label):
 
         if self.is_running():
 
             self.log(
-                "cleaning_manager is already running"
+                f"{self.label} 실행 중입니다. 먼저 끝나기를 기다리세요."
             )
 
             return False
@@ -101,10 +117,12 @@ class ManagerProcess:
                     "ros2",
                     "run",
                     PACKAGE,
-                    EXECUTABLE,
+                    executable,
                 ],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
                 # Own process group, so signals reach ros2 run and its child.
                 start_new_session=True,
             )
@@ -114,29 +132,85 @@ class ManagerProcess:
             self.process = None
 
             self.log(
-                f"Failed to start cleaning_manager: "
+                f"{label} 실행 실패: "
                 f"{type(e).__name__}: {e}"
             )
 
             return False
 
+        self.executable = executable
+        self.label = label
+        self.saw_error = False
+
+        # The pipe must be drained on its own thread; a full buffer would
+        # block the child mid-motion.
+        self._reader = threading.Thread(
+            target=self._drain,
+            args=(self.process,),
+            daemon=True,
+        )
+
+        self._reader.start()
+
         self.log(
-            f"cleaning_manager started (pid {self.process.pid})"
+            f"{label} 시작 (pid {self.process.pid})"
         )
 
         return True
+
+    # =========================================================
+    # OUTPUT READER
+    # =========================================================
+
+    def _drain(self, process):
+
+        try:
+
+            for line in process.stdout:
+
+                line = line.rstrip()
+
+                if not line:
+                    continue
+
+                if any(m in line for m in ERROR_MARKERS):
+
+                    self.saw_error = True
+
+                if self._output is not None:
+
+                    self._output(line)
+
+        except (ValueError, OSError):
+
+            # Pipe closed while the process was being torn down.
+            pass
 
     # =========================================================
     # STOP
     # =========================================================
 
     def stop(self, force=False):
+        """Signal the child. Does not block; poll_exit_code() reports the end."""
 
         if not self.is_running():
 
-            self.log(
-                "cleaning_manager is not running"
-            )
+            return False
+
+        sig = signal.SIGKILL if force else signal.SIGINT
+
+        self._signal_group(self.process, sig)
+
+        self.log(
+            f"{self.label} {'강제 종료' if force else '종료 요청'}"
+        )
+
+        return True
+
+    def stop_and_wait(self, force=False):
+        """Blocking stop, for application shutdown only."""
+
+        if not self.is_running():
 
             return False
 
@@ -145,10 +219,6 @@ class ManagerProcess:
         if force:
 
             self._signal_group(process, signal.SIGKILL)
-
-            self.log(
-                "cleaning_manager killed"
-            )
 
         else:
 
@@ -161,10 +231,6 @@ class ManagerProcess:
                 if not self._wait(process, SIGTERM_GRACE):
 
                     self._signal_group(process, signal.SIGKILL)
-
-            self.log(
-                "cleaning_manager stopped"
-            )
 
         self._wait(process, SIGTERM_GRACE)
 
